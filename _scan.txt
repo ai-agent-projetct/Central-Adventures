@@ -1,0 +1,96 @@
+GlobeJourney.jsx:1:import React, { useEffect, useRef, useState } from "react";
+GlobeJourney.jsx:10: * Two-phase scroll journey:
+GlobeJourney.jsx:11: *  Phase 1 (0 → 0.15 progress): 3D Earth in space (existing Three.js scene).
+GlobeJourney.jsx:12: *  Phase 2 (0.15 → 0.92 progress): Scroll-driven aerial flythrough video —
+GlobeJourney.jsx:13: *      video.currentTime is bound linearly to scroll progress, so the user
+GlobeJourney.jsx:14: *      scrubs through the ~35s AI-generated drone reel with mouse-wheel.
+GlobeJourney.jsx:22:  const videoRef = useRef(null);
+GlobeJourney.jsx:25:  const [progress, setProgress] = useState(0);
+GlobeJourney.jsx:28:  const [currentTime, setCurrentTime] = useState(0);
+GlobeJourney.jsx:31:  useEffect(() => {
+GlobeJourney.jsx:36:  useEffect(() => {
+GlobeJourney.jsx:37:    if (!videoInfo || !videoRef.current) return;
+GlobeJourney.jsx:38:    const v = videoRef.current;
+GlobeJourney.jsx:42:  // Track scroll & drive video currentTime. Always compute target — no state gates —
+GlobeJourney.jsx:44:  const progressRef = useRef(0);
+GlobeJourney.jsx:45:  useEffect(() => {
+GlobeJourney.jsx:49:    const onScroll = () => {
+GlobeJourney.jsx:52:      const scrolled = Math.min(Math.max(-rect.top, 0), height);
+GlobeJourney.jsx:53:      const p = height > 0 ? scrolled / height : 0;
+GlobeJourney.jsx:54:      progressRef.current = p;
+GlobeJourney.jsx:57:    onScroll();
+GlobeJourney.jsx:58:    window.addEventListener("scroll", onScroll, { passive: true });
+GlobeJourney.jsx:59:    window.addEventListener("resize", onScroll);
+GlobeJourney.jsx:61:      window.removeEventListener("scroll", onScroll);
+GlobeJourney.jsx:62:      window.removeEventListener("resize", onScroll);
+GlobeJourney.jsx:66:  // rAF loop — always running once video element exists. Reads progressRef,
+GlobeJourney.jsx:67:  // computes target, and moves video.currentTime toward it. Gates internally
+GlobeJourney.jsx:69:  useEffect(() => {
+GlobeJourney.jsx:70:    if (!videoRef.current) return;
+GlobeJourney.jsx:74:      const video = videoRef.current;
+GlobeJourney.jsx:77:        const p = progressRef.current;
+GlobeJourney.jsx:78:        // Map scroll 0.04 → 0.98 to video 0 → duration
+GlobeJourney.jsx:81:        const cur = video.currentTime;
+GlobeJourney.jsx:87:            video.currentTime = cur + diff * factor;
+GlobeJourney.jsx:90:        setCurrentTime(video.currentTime);
+GlobeJourney.jsx:92:      rafRef.current = requestAnimationFrame(step);
+GlobeJourney.jsx:94:    rafRef.current = requestAnimationFrame(step);
+GlobeJourney.jsx:102:  const introVisible = progress < 0.06;
+GlobeJourney.jsx:103:  const videoVisible = progress >= 0.04 && progress < 0.99;
+GlobeJourney.jsx:104:  const outroVisible = progress >= 0.98;
+GlobeJourney.jsx:112:      if (l.video_start != null && currentTime >= l.video_start && currentTime < l.video_end) {
+GlobeJourney.jsx:120:  const inScene = activeLoc ? (currentTime - activeLoc.video_start) : 0;
+GlobeJourney.jsx:152:        {/* Phase 2 — Scroll-driven flythrough video (always mounted so it can buffer even during intro) */}
+GlobeJourney.jsx:159:              ref={videoRef}
+GlobeJourney.jsx:180:        {!videoReady && progress > 0.02 && (
+GlobeJourney.jsx:202:                Scroll to lift off from Earth and glide through {locations.length} landmarks —
+GlobeJourney.jsx:287:              data-testid={`progress-dot-${l.id}`}
+GlobeJourney.jsx:297:            <span>Scroll to fly</span>
+SmoothScroll.jsx:1:import React, { useEffect } from "react";
+SmoothScroll.jsx:2:import Lenis from "lenis";
+SmoothScroll.jsx:4:export const SmoothScroll = ({ children }) => {
+SmoothScroll.jsx:5:  useEffect(() => {
+SmoothScroll.jsx:6:    const lenis = new Lenis({
+SmoothScroll.jsx:14:      requestAnimationFrame(raf);
+SmoothScroll.jsx:16:    requestAnimationFrame(raf);
+JourneyScroll.jsx:1:import React, { useEffect, useRef, useState } from "react";
+JourneyScroll.jsx:10:  useEffect(() => {
+JourneyScroll.jsx:12:    const io = new IntersectionObserver(
+JourneyScroll.jsx:35:            style={{ transform: visible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)" }}
+JourneyScroll.jsx:80:export const JourneyScroll = ({ destinations }) => {
+JourneyScroll.jsx:82:    <div data-testid="journey-scroll" className="relative">
+JourneyScroll.jsx:90:          Scroll through the day. Each destination unfolds in its own hour of light.
+Globe3DScene.jsx:1:import React, { useEffect, useRef } from "react";
+Globe3DScene.jsx:5: * Immersive scroll-driven 3D globe scene.
+Globe3DScene.jsx:43:  const scrollProgressRef = useRef(0);
+Globe3DScene.jsx:45:  useEffect(() => {
+Globe3DScene.jsx:67:    const ro = new ResizeObserver(resize);
+Globe3DScene.jsx:199:    // ---- Scroll-driven camera choreography ----
+Globe3DScene.jsx:234:        camera.position.copy(prev).lerp(approach, smooth(frac));
+Globe3DScene.jsx:241:        camera.position.copy(from).lerp(to, smooth(t));
+Globe3DScene.jsx:247:    // Scroll listener
+Globe3DScene.jsx:248:    const onScroll = () => {
+Globe3DScene.jsx:249:      // We treat the entire document scroll as the timeline for the hero pin
+Globe3DScene.jsx:254:      const scrolled = Math.min(Math.max(-rect.top, 0), height);
+Globe3DScene.jsx:255:      const p = height > 0 ? scrolled / height : 0;
+Globe3DScene.jsx:256:      scrollProgressRef.current = p;
+Globe3DScene.jsx:258:    onScroll();
+Globe3DScene.jsx:259:    window.addEventListener("scroll", onScroll, { passive: true });
+Globe3DScene.jsx:266:      const p = scrollProgressRef.current;
+Globe3DScene.jsx:277:      raf = requestAnimationFrame(render);
+Globe3DScene.jsx:283:      window.removeEventListener("scroll", onScroll);
+HeroCanvas.jsx:1:import React, { useEffect, useRef } from "react";
+HeroCanvas.jsx:3:/* Scroll-driven animated hero:
+HeroCanvas.jsx:5:   - Camera zooms in on the sphere as the user scrolls (perspective decreases → orbit tightens)
+HeroCanvas.jsx:9:  const scrollRef = useRef(0);
+HeroCanvas.jsx:11:  useEffect(() => {
+HeroCanvas.jsx:26:    window.addEventListener("resize", resize);
+HeroCanvas.jsx:28:    const onScroll = () => {
+HeroCanvas.jsx:30:      scrollRef.current = Math.min(1.4, Math.max(0, window.scrollY / vh));
+HeroCanvas.jsx:32:    onScroll();
+HeroCanvas.jsx:33:    window.addEventListener("scroll", onScroll, { passive: true });
+HeroCanvas.jsx:58:      const s = scrollRef.current;
+HeroCanvas.jsx:59:      // Cinematic pin: globe moves + scales with scroll (zoom-in feel)
+HeroCanvas.jsx:62:      const R = baseR * (1 + s * 0.5); // grows with scroll
+HeroCanvas.jsx:104:      raf = requestAnimationFrame(render);
+HeroCanvas.jsx:111:      window.removeEventListener("scroll", onScroll);
