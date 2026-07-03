@@ -6,11 +6,12 @@ import { Globe3DScene } from "./Globe3DScene";
 const TIME_ICONS = { sunrise: Sunrise, morning: Sunrise, day: Sun, sunset: Sunset, dusk: Sunset, night: Moon };
 
 /**
- * Full immersive scroll journey:
- * - Sticky Three.js earth stays pinned as user scrolls a tall (700vh) container.
- * - Camera flies from far → into each of the 6 landmark markers.
- * - HTML overlays (title + copy + highlights) crossfade in/out sync with scroll stop.
- * - Header hero (with tagline + CTA) sits inside the intro band (top of the pin).
+ * Immersive scroll journey.
+ * Uses a sticky container. Inside:
+ *   • Three.js earth stays visible as ambient background (dimmed at close-ups).
+ *   • At each landmark segment, a real photograph of the location cross-fades
+ *     to the foreground as a large "postcard" panel next to the info card.
+ *   • Intro/outro overlays bookend the journey.
  */
 export const GlobeJourney = ({ locations = [] }) => {
   const containerRef = useRef(null);
@@ -34,13 +35,18 @@ export const GlobeJourney = ({ locations = [] }) => {
   const stops = locations.length;
   const seg = 0.75 / Math.max(1, stops);
   let activeIdx = -1;
+  let localFrac = 0;
   if (progress >= 0.1 && progress < 0.85) {
-    activeIdx = Math.min(stops - 1, Math.floor((progress - 0.1) / seg));
+    const local = (progress - 0.1) / 0.75;
+    const idxF = local / seg;
+    activeIdx = Math.min(stops - 1, Math.floor(idxF));
+    localFrac = idxF - activeIdx;
   }
   const introVisible = progress < 0.1;
   const outroVisible = progress >= 0.85;
-  const activeLoc = activeIdx >= 0 ? locations[activeIdx] : null;
-  const ActiveIcon = activeLoc ? TIME_ICONS[activeLoc.time_of_day] || Sun : Sun;
+
+  // Photo intensity fades in near the middle of each segment for a "postcard reveal" feel
+  const photoOpacity = activeIdx >= 0 ? Math.min(1, Math.sin(localFrac * Math.PI) * 1.4) : 0;
 
   return (
     <div
@@ -50,9 +56,37 @@ export const GlobeJourney = ({ locations = [] }) => {
       className="relative"
       style={{ height: `${100 + 100 * (stops + 1)}vh` }}
     >
-      {/* PIN */}
+      {/* Sticky pin */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <Globe3DScene locations={locations} />
+        {/* Globe layer (dims when landmark photo is prominent) */}
+        <div
+          className="absolute inset-0 transition-opacity duration-500"
+          style={{ opacity: activeIdx >= 0 ? 0.35 + (1 - photoOpacity) * 0.4 : 1 }}
+        >
+          <Globe3DScene locations={locations} />
+        </div>
+
+        {/* Landmark photo layer — cross-fade per stop */}
+        {locations.map((loc, i) => (
+          <div
+            key={loc.id}
+            aria-hidden={i !== activeIdx}
+            className="absolute inset-0 pointer-events-none transition-opacity duration-700"
+            style={{ opacity: i === activeIdx ? photoOpacity : 0 }}
+          >
+            <div className="absolute inset-0">
+              <img
+                src={loc.image}
+                alt={loc.name}
+                className="w-full h-full object-cover"
+                loading={i === activeIdx ? "eager" : "lazy"}
+                data-testid={`landmark-photo-${loc.id}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#040914]/95 via-[#040914]/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#040914] via-transparent to-[#040914]/60" />
+            </div>
+          </div>
+        ))}
 
         {/* Subtle vignette */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-[#040914]/70" />
@@ -73,8 +107,8 @@ export const GlobeJourney = ({ locations = [] }) => {
                 <span className="text-gradient">Fly to the classroom.</span>
               </h1>
               <p className="text-lg text-[#A0B2C6] max-w-lg leading-relaxed mb-10">
-                Scroll to dive into six landmarks — NASA, Statue of Liberty, Pyramids, Burj Khalifa,
-                Marina Bay, Petronas — where 6,000+ students have already been.
+                Scroll to dive into {stops} landmarks — from Lady Liberty to the twin Petronas — where
+                6,000+ students have already been.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a
@@ -96,47 +130,57 @@ export const GlobeJourney = ({ locations = [] }) => {
           </div>
         </div>
 
-        {/* Active landmark overlay */}
-        {activeLoc && (
-          <div
-            key={activeLoc.id}
-            data-testid={`journey-active-${activeLoc.id}`}
-            className="absolute inset-0 flex items-end lg:items-center pointer-events-none"
-          >
-            <div className="container-x pointer-events-auto grid lg:grid-cols-2 gap-8 items-end pb-16 lg:pb-0">
-              <div className="lg:col-start-2">
-                <div className="crystal-glass rounded-3xl p-7 md:p-9 max-w-lg ml-auto animate-[fadein_500ms_ease-out]">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="w-8 h-8 rounded-full bg-[#E29578]/20 border border-[#E29578]/40 flex items-center justify-center text-[#E29578]">
-                      <ActiveIcon size={14} />
-                    </span>
-                    <span className="text-[10px] uppercase tracking-[0.28em] text-[#E29578]">
-                      Scene {String(activeIdx + 1).padStart(2, "0")} · {activeLoc.time_of_day}
-                    </span>
-                  </div>
-                  <div className="text-xs text-[#A0B2C6] mb-1">{activeLoc.country}</div>
-                  <h2 className="text-3xl sm:text-4xl font-light tracking-tighter text-white">{activeLoc.name}</h2>
-                  <div className="text-[#E29578] font-['Outfit'] text-lg mt-2">{activeLoc.tagline}</div>
-                  <p className="text-sm text-[#A0B2C6] leading-relaxed mt-4">{activeLoc.description}</p>
-                  <ul className="grid grid-cols-2 gap-2 mt-5">
-                    {activeLoc.highlights?.slice(0, 4).map((h) => (
-                      <li key={h} className="flex items-center gap-2 text-xs text-white/90">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E29578]" /> {h}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    to="/contact"
-                    data-testid={`journey-cta-${activeLoc.id}`}
-                    className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-[#E29578] hover:text-[#040914] hover:border-transparent transition-all text-xs font-semibold text-white uppercase tracking-[0.2em]"
+        {/* Active landmark info panel */}
+        {activeIdx >= 0 && (() => {
+          const activeLoc = locations[activeIdx];
+          const ActiveIcon = TIME_ICONS[activeLoc.time_of_day] || Sun;
+          return (
+            <div
+              key={activeLoc.id}
+              data-testid={`journey-active-${activeLoc.id}`}
+              className="absolute inset-0 flex items-end lg:items-center pointer-events-none"
+            >
+              <div className="container-x pointer-events-auto grid lg:grid-cols-12 gap-8 items-end lg:items-center pb-16 lg:pb-0">
+                {/* Text card on right */}
+                <div className="lg:col-start-7 lg:col-span-6">
+                  <div
+                    className="crystal-glass rounded-3xl p-7 md:p-10 max-w-xl ml-auto"
+                    style={{ animation: "fadein 500ms ease-out" }}
                   >
-                    Plan this journey <ArrowRight size={14} />
-                  </Link>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="w-8 h-8 rounded-full bg-[#E29578]/20 border border-[#E29578]/40 flex items-center justify-center text-[#E29578]">
+                        <ActiveIcon size={14} />
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.28em] text-[#E29578]">
+                        Scene {String(activeIdx + 1).padStart(2, "0")} · {activeLoc.time_of_day}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#A0B2C6] mb-1">{activeLoc.country}</div>
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-tighter text-white">
+                      {activeLoc.name}
+                    </h2>
+                    <div className="text-[#E29578] font-['Outfit'] text-lg mt-3">{activeLoc.tagline}</div>
+                    <p className="text-sm text-[#A0B2C6] leading-relaxed mt-4">{activeLoc.description}</p>
+                    <ul className="grid grid-cols-2 gap-2 mt-5">
+                      {activeLoc.highlights?.slice(0, 4).map((h) => (
+                        <li key={h} className="flex items-center gap-2 text-xs text-white/90">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E29578]" /> {h}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      to="/contact"
+                      data-testid={`journey-cta-${activeLoc.id}`}
+                      className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-[#E29578] hover:text-[#040914] hover:border-transparent transition-all text-xs font-semibold text-white uppercase tracking-[0.2em]"
+                    >
+                      Plan this journey <ArrowRight size={14} />
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Outro overlay */}
         <div
@@ -160,7 +204,7 @@ export const GlobeJourney = ({ locations = [] }) => {
         </div>
 
         {/* Progress dots */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-none">
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-none z-10">
           {locations.map((l, i) => (
             <div
               key={l.id}

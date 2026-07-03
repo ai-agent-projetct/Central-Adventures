@@ -101,26 +101,37 @@ async def brochure_request(payload: BrochureRequestCreate):
 # ============== STATIC CONTENT ==============
 GLOBAL_DESTINATIONS = [
     {
-        "id": "nasa",
-        "name": "NASA Kennedy Space Center",
-        "country": "USA",
-        "time_of_day": "sunrise",
-        "sky": {"from": "#FF7A00", "to": "#F5D9AA"},
-        "tagline": "Where dreams ignite at dawn",
-        "description": "Witness Atlantis, walk the Rocket Garden, meet real astronauts. 6,000+ students have made this journey with us.",
-        "image": "https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=1600&q=80",
-        "highlights": ["Atlantis Exhibit", "Rocket Garden", "Astronaut Encounter", "ATX Program"]
-    },
-    {
         "id": "liberty",
         "name": "Statue of Liberty",
         "country": "New York, USA",
+        "time_of_day": "sunrise",
+        "sky": {"from": "#FF7A00", "to": "#F5D9AA"},
+        "tagline": "A monument, a message, a memory",
+        "description": "Where every immigrant's dream first touched shore. Sail past Lady Liberty at sunrise, then explore Ellis Island's living archives — stories that built modern America.",
+        "image": "https://images.unsplash.com/photo-1583842761829-2b46658d95cb?w=1600&q=80",
+        "highlights": ["Liberty Island ferry", "Ellis Island Museum", "Battery Park", "One World Observatory"]
+    },
+    {
+        "id": "washington",
+        "name": "Washington D.C.",
+        "country": "USA Capital",
         "time_of_day": "morning",
         "sky": {"from": "#FFB27A", "to": "#7EC8E3"},
-        "tagline": "A monument, a message, a memory",
-        "description": "New York to Washington DC — UN HQ, Smithsonian, White House, and Lady Liberty herself.",
-        "image": "https://images.pexels.com/photos/64271/queen-of-liberty-statue-of-liberty-new-york-liberty-statue-64271.jpeg?w=1600&q=80",
-        "highlights": ["UN Headquarters", "Smithsonian", "White House Tour", "Times Square"]
+        "tagline": "Where a nation writes its history",
+        "description": "The White House, Capitol Hill, Lincoln Memorial and the Smithsonian's 19 free museums. Government meets genius on the National Mall.",
+        "image": "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?w=1600&q=80",
+        "highlights": ["White House", "Capitol Hill", "Lincoln Memorial", "Smithsonian Museums"]
+    },
+    {
+        "id": "nasa",
+        "name": "NASA Kennedy Space Center",
+        "country": "Florida, USA",
+        "time_of_day": "day",
+        "sky": {"from": "#4CA1AF", "to": "#F5D9AA"},
+        "tagline": "Where dreams ignite at dawn",
+        "description": "Witness Atlantis, walk the Rocket Garden, meet real astronauts. 6,000+ students have made this journey with us since 1987.",
+        "image": "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1600&q=80",
+        "highlights": ["Atlantis Exhibit", "Rocket Garden", "Astronaut Encounter", "ATX Program"]
     },
     {
         "id": "egypt",
@@ -129,41 +140,43 @@ GLOBAL_DESTINATIONS = [
         "time_of_day": "day",
         "sky": {"from": "#F5B461", "to": "#E29578"},
         "tagline": "Standing at the edge of 4,500 years",
-        "description": "Valley of Kings, Philae Temple, Snorkelling in Hurghada, and dinner cruises on the Nile.",
-        "image": "https://images.pexels.com/photos/15127135/pexels-photo-15127135.jpeg?w=1600&q=80",
+        "description": "Valley of Kings, Philae Temple, snorkelling in Hurghada and dinner cruises on the eternal Nile.",
+        "image": "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=1600&q=80",
         "highlights": ["Great Pyramid", "Valley of Kings", "Philae Temple", "Nile Cruise"]
     },
     {
         "id": "dubai",
-        "name": "Burj Khalifa",
-        "country": "Dubai, UAE",
+        "name": "Burj Khalifa · Dubai",
+        "country": "UAE",
         "time_of_day": "sunset",
         "sky": {"from": "#7A3B69", "to": "#E29578"},
         "tagline": "Golden hour above the desert",
-        "description": "From the world's tallest tower to Desert Safaris — luxury meets learning.",
-        "image": "https://images.pexels.com/photos/5577693/pexels-photo-5577693.jpeg?w=1600&q=80",
+        "description": "From the world's tallest tower to Desert Safaris and the Miracle Garden — where luxury meets learning.",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/kvs1gjwn_images%20%283%29.jpeg",
+        "image_night": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/au4b9cju_images%20%284%29.jpeg",
         "highlights": ["Burj Khalifa Deck", "Desert Safari", "Dubai Frame", "Global Village"]
     },
     {
         "id": "singapore",
-        "name": "Marina Bay",
+        "name": "Marina Bay · Singapore",
         "country": "Singapore",
         "time_of_day": "dusk",
         "sky": {"from": "#1B2951", "to": "#7A3B69"},
         "tagline": "A city that glows at night",
-        "description": "Gardens by the Bay, Universal Studios, Science Centre — technology meets nature.",
-        "image": "https://images.pexels.com/photos/18787363/pexels-photo-18787363.jpeg?w=1600&q=80",
+        "description": "Gardens by the Bay, Universal Studios and the Science Centre — where technology meets tropical nature.",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/yd413cei_images%20%287%29.jpeg",
+        "image_night": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/zkqto252_images%20%286%29.jpeg",
         "highlights": ["Gardens by the Bay", "Universal Studios", "Science Centre", "Sentosa"]
     },
     {
         "id": "malaysia",
-        "name": "Petronas Towers",
+        "name": "Petronas Towers · Kuala Lumpur",
         "country": "Malaysia",
         "time_of_day": "night",
         "sky": {"from": "#040914", "to": "#1B2951"},
         "tagline": "Twin lights against the tropical sky",
-        "description": "Kuala Lumpur, Genting Highlands, and Langkawi — Southeast Asia at its finest.",
-        "image": "https://images.pexels.com/photos/2044434/pexels-photo-2044434.jpeg?w=1600&q=80",
+        "description": "Kuala Lumpur, Genting Highlands and Langkawi — Southeast Asia at its finest, from soaring towers to island paradises.",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/el1royqi_images%20%285%29.jpeg",
         "highlights": ["Petronas Towers", "Genting Highlands", "Batu Caves", "Langkawi"]
     }
 ]
@@ -201,18 +214,20 @@ TRAINING_PROGRAMS = [
 ]
 
 GALLERY_IMAGES = [
-    {"id": 1, "url": "https://images.unsplash.com/photo-1614728263952-84ea256f9679?w=1000&q=80", "category": "NASA Tour", "caption": "Kennedy Space Center visit"},
-    {"id": 2, "url": "https://images.pexels.com/photos/15127135/pexels-photo-15127135.jpeg?w=1000&q=80", "category": "Egypt Tour", "caption": "Pyramids of Giza"},
-    {"id": 3, "url": "https://images.pexels.com/photos/5577693/pexels-photo-5577693.jpeg?w=1000&q=80", "category": "General Tour", "caption": "Dubai skyline"},
-    {"id": 4, "url": "https://images.pexels.com/photos/18787363/pexels-photo-18787363.jpeg?w=1000&q=80", "category": "General Tour", "caption": "Singapore Marina Bay"},
+    {"id": 1, "url": "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1000&q=80", "category": "NASA Tour", "caption": "Kennedy Space Center"},
+    {"id": 2, "url": "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=1000&q=80", "category": "Egypt Tour", "caption": "Pyramids of Giza"},
+    {"id": 3, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/kvs1gjwn_images%20%283%29.jpeg", "category": "General Tour", "caption": "Dubai skyline at sunset"},
+    {"id": 4, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/yd413cei_images%20%287%29.jpeg", "category": "General Tour", "caption": "Marina Bay Sands, Singapore"},
     {"id": 5, "url": "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=1000&q=80", "category": "General Tour", "caption": "Kashmir Dal Lake"},
     {"id": 6, "url": "https://images.pexels.com/photos/32261804/pexels-photo-32261804.jpeg?w=1000&q=80", "category": "General Tour", "caption": "Jaipur heritage"},
     {"id": 7, "url": "https://images.unsplash.com/photo-1506947411487-a56738267384?w=1000&q=80", "category": "NASA Tour", "caption": "Drone training"},
     {"id": 8, "url": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1000&q=80", "category": "DUDHWA NATIONAL PARK", "caption": "Wildlife safari"},
     {"id": 9, "url": "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1000&q=80", "category": "General Tour", "caption": "Himalayan trails"},
-    {"id": 10, "url": "https://images.pexels.com/photos/2044434/pexels-photo-2044434.jpeg?w=1000&q=80", "category": "General Tour", "caption": "Kuala Lumpur nights"},
-    {"id": 11, "url": "https://images.pexels.com/photos/64271/queen-of-liberty-statue-of-liberty-new-york-liberty-statue-64271.jpeg?w=1000&q=80", "category": "General Tour", "caption": "Statue of Liberty"},
-    {"id": 12, "url": "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1000&q=80", "category": "General Tour", "caption": "Delhi Agra heritage"},
+    {"id": 10, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/el1royqi_images%20%285%29.jpeg", "category": "General Tour", "caption": "Petronas Towers, Kuala Lumpur"},
+    {"id": 11, "url": "https://images.unsplash.com/photo-1583842761829-2b46658d95cb?w=1000&q=80", "category": "General Tour", "caption": "Statue of Liberty"},
+    {"id": 12, "url": "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?w=1000&q=80", "category": "General Tour", "caption": "Washington D.C."},
+    {"id": 13, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/au4b9cju_images%20%284%29.jpeg", "category": "General Tour", "caption": "Dubai at night"},
+    {"id": 14, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/zkqto252_images%20%286%29.jpeg", "category": "General Tour", "caption": "Singapore skyline"},
 ]
 
 BROCHURES = [

@@ -18,12 +18,13 @@ import * as THREE from "three";
  *   Malaysia     →  3.1579, 101.7118   (Petronas Towers)
  */
 const LATLNG = {
-  nasa:      { lat: 28.5721, lng: -80.648 },
-  liberty:   { lat: 40.6892, lng: -74.0445 },
-  egypt:     { lat: 29.9773, lng: 31.1325 },
-  dubai:     { lat: 25.1972, lng: 55.2744 },
-  singapore: { lat: 1.283,   lng: 103.8607 },
-  malaysia:  { lat: 3.1579,  lng: 101.7118 },
+  liberty:    { lat: 40.6892, lng: -74.0445 },
+  washington: { lat: 38.8977, lng: -77.0365 },
+  nasa:       { lat: 28.5721, lng: -80.648 },
+  egypt:      { lat: 29.9773, lng: 31.1325 },
+  dubai:      { lat: 25.1972, lng: 55.2744 },
+  singapore:  { lat: 1.283,   lng: 103.8607 },
+  malaysia:   { lat: 3.1579,  lng: 101.7118 },
 };
 
 // Convert lat/lng to xyz on a unit sphere (radius r).
