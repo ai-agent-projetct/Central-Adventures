@@ -1,18 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowRight, Sunrise, Sun, Sunset, Moon } from "lucide-react";
-import { Globe3DScene } from "./Globe3DScene";
 
 const TIME_ICONS = { sunrise: Sunrise, morning: Sunrise, day: Sun, sunset: Sunset, dusk: Sunset, night: Moon };
 
+/* Bird SVG (small silhouette). Rendered a few times drifting across sky at random speeds. */
+const Bird = ({ style }) => (
+  <svg style={style} width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 8 C 4 3, 7 3, 10 7 C 13 3, 16 3, 21 8" stroke="#0A0F16" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+  </svg>
+);
+
 /**
- * Cinematic scroll journey with 3D depth-of-field.
- * Each landmark photo:
- *   • enters from below with rotateX + scale (like a card lifting off a table),
- *   • Ken-Burns pans while active (subtle zoom + drift),
- *   • exits by rotating away and receding into the distance.
- * Combined with the sticky Three.js earth in the background, the effect reads
- * as "diving into a 3D location" every ~viewport of scroll.
+ * Aerial "drone" flythrough journey.
+ *   • Sticky container with continuous camera motion — no card cross-fades.
+ *   • Each landmark image is oversized (140% width) and continuously pans + zooms
+ *     across its segment (drone flying over the site).
+ *   • Adjacent images overlap during transitions to fake a seamless fly-through.
+ *   • Warm golden-hour tint layered across the whole journey.
+ *   • Birds silhouettes drift across at intervals.
+ *   • Info card stays anchored bottom-left; only content changes per scene.
  */
 export const GlobeJourney = ({ locations = [] }) => {
   const containerRef = useRef(null);
@@ -34,20 +41,20 @@ export const GlobeJourney = ({ locations = [] }) => {
   }, []);
 
   const stops = locations.length;
-  const seg = 0.75 / Math.max(1, stops);
+  // Reserve first 8% for intro hero, last 8% for outro CTA. Rest split evenly.
+  const introEnd = 0.08;
+  const outroStart = 0.92;
+  const seg = (outroStart - introEnd) / Math.max(1, stops);
+
   let activeIdx = -1;
   let localFrac = 0;
-  if (progress >= 0.1 && progress < 0.85) {
-    const local = (progress - 0.1) / 0.75;
-    const idxF = local / seg;
+  if (progress >= introEnd && progress < outroStart) {
+    const idxF = (progress - introEnd) / seg;
     activeIdx = Math.min(stops - 1, Math.floor(idxF));
     localFrac = idxF - activeIdx;
   }
-  const introVisible = progress < 0.1;
-  const outroVisible = progress >= 0.85;
-
-  // Bell curve: image is transparent at edges of segment, full at middle
-  const bell = Math.max(0, Math.sin(localFrac * Math.PI));
+  const introVisible = progress < introEnd;
+  const outroVisible = progress >= outroStart;
 
   return (
     <div
@@ -55,98 +62,89 @@ export const GlobeJourney = ({ locations = [] }) => {
       data-scene="globe-hero"
       data-testid="globe-journey"
       className="relative"
-      style={{ height: `${100 + 100 * (stops + 1)}vh` }}
+      style={{ height: `${100 + 90 * (stops + 1)}vh` }}
     >
-      {/* Sticky pin */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden" style={{ perspective: "1400px" }}>
-        {/* Globe layer — dims when landmark photo is prominent */}
-        <div
-          className="absolute inset-0 transition-opacity duration-500"
-          style={{ opacity: activeIdx >= 0 ? 0.25 + (1 - bell) * 0.5 : 1 }}
-        >
-          <Globe3DScene locations={locations} />
-        </div>
-
-        {/* 3D Landmark scenes — dive-in effect: image starts far & tiny,
-            scales forward past the viewer, next scene rises from horizon.
-            Matches the Instagram-reel "fly through cities" cadence. */}
+      {/* Sticky flythrough pin */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        {/* Continuous drone track — every landmark rendered; only active + neighbour
+            (for cross-in) contribute visible pixels. */}
         {locations.map((loc, i) => {
-          const isActive = i === activeIdx;
-
-          // Compute per-scene scale/opacity from localFrac (0 → 1)
-          // Enter (0-0.4): scale 0.15 → 1.0, opacity 0 → 1
-          // Peak  (0.4-0.6): full-bleed, subtle Ken Burns 1.0 → 1.12
-          // Exit (0.6-1.0): scale 1.12 → 3.5, opacity 1 → 0 (fly through)
-          let scale = 0.15, opacity = 0, tz = -800, blur = 0;
-          if (isActive) {
-            if (localFrac < 0.4) {
-              const t = localFrac / 0.4;
-              const eased = t * t; // ease-in for acceleration
-              scale = 0.15 + 0.85 * eased;
-              tz = -800 + 800 * eased;
-              opacity = Math.min(1, t * 1.6);
-              blur = (1 - t) * 6;
-            } else if (localFrac < 0.6) {
-              const t = (localFrac - 0.4) / 0.2;
-              scale = 1.0 + 0.12 * t;
-              tz = 0;
-              opacity = 1;
-              blur = 0;
-            } else {
-              const t = (localFrac - 0.6) / 0.4;
-              const eased = 1 - Math.pow(1 - t, 2); // ease-out
-              scale = 1.12 + 2.38 * eased;
-              tz = 0 + 200 * eased;
-              opacity = Math.max(0, 1 - eased * 1.6);
-              blur = eased * 10;
-            }
+          // Compute presence in viewport based on distance from active + localFrac
+          // pos: -1 = just left screen, 0 = active center, +1 = about to enter
+          let pos;
+          if (activeIdx < 0) {
+            pos = i === 0 ? -localFrac : (i - (progress / introEnd) * 0.001) + 1; // during intro all hidden except first about to enter
+            pos = i === 0 ? 1 - (progress / introEnd) : 2;
+          } else {
+            pos = (i - activeIdx) - localFrac; // -1 → 0 → +1 as scene progresses
           }
+          // Only render nearby scenes for perf
+          if (pos < -1.05 || pos > 1.05) return null;
+
+          // Camera motion per landmark: forward zoom + horizontal pan across segment
+          // pos 0 = center of segment (max zoom). |pos|=1 = at the edge (handoff)
+          const p = pos; // -1..1
+          // Alternate pan direction per scene for varied camera feel
+          const dir = i % 2 === 0 ? 1 : -1;
+
+          // scale: 1.15 at handoff → 1.35 at peak (drone getting closer)
+          const scale = 1.15 + 0.2 * Math.max(0, 1 - Math.abs(p));
+
+          // translateX: pans from +8% to -8% as we cross the scene
+          const tx = -p * 10 * dir; // percent viewport
+          // translateY: subtle rise
+          const ty = p * -4;
+          // rotate: subtle tilt for cinematic feel
+          const rot = p * -1.5 * dir;
+
+          // Opacity: full while |p| < 0.55; sharp fade at handoff to avoid muddy double-exposure
+          const opacity = Math.max(0, Math.min(1, 1.9 - Math.abs(p) * 3.4));
 
           return (
             <div
               key={loc.id}
-              aria-hidden={!isActive}
-              className="absolute inset-0 pointer-events-none flex items-center justify-center"
+              aria-hidden={i !== activeIdx}
+              className="absolute inset-0 pointer-events-none"
               style={{
                 opacity,
-                transform: `translateZ(${tz}px) scale(${scale})`,
-                transformStyle: "preserve-3d",
-                filter: blur > 0.1 ? `blur(${blur.toFixed(2)}px)` : "none",
-                willChange: "transform, opacity, filter",
+                transform: `translate(${tx}%, ${ty}%) scale(${scale}) rotate(${rot}deg)`,
+                transformOrigin: "50% 55%",
+                willChange: "transform, opacity",
+                transition: "opacity 200ms linear",
               }}
             >
-              <div className="absolute inset-0">
-                <img
-                  src={loc.image}
-                  alt={loc.name}
-                  loading={isActive ? "eager" : "lazy"}
-                  data-testid={`landmark-photo-${loc.id}`}
-                  className="w-full h-full object-cover"
-                />
-                {/* Text side gradient (darker at bottom for card readability) */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#040914]/95 via-[#040914]/25 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#040914] via-transparent to-[#040914]/40" />
-              </div>
+              <img
+                src={loc.image}
+                alt={loc.name}
+                loading={Math.abs(pos) < 0.5 ? "eager" : "lazy"}
+                data-testid={`landmark-photo-${loc.id}`}
+                className="w-full h-full object-cover"
+              />
             </div>
           );
         })}
 
-        {/* Motion-streak overlay — kicks in during transition (localFrac near 0 or 1) */}
-        {activeIdx >= 0 && (
-          <div
-            className="absolute inset-0 pointer-events-none mix-blend-screen"
-            style={{
-              opacity: Math.max(0, 1 - Math.sin(localFrac * Math.PI) * 1.4),
-              background:
-                "radial-gradient(ellipse at center, rgba(226,149,120,0.25) 0%, transparent 45%), repeating-linear-gradient(90deg, transparent 0 6px, rgba(255,255,255,0.05) 6px 7px)",
-            }}
-          />
-        )}
+        {/* Golden-hour tint (warm overlay across the whole flythrough) */}
+        <div
+          className="absolute inset-0 pointer-events-none mix-blend-soft-light"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(255,180,110,0.55) 0%, rgba(255,140,80,0.35) 45%, rgba(120,60,80,0.25) 100%)",
+          }}
+        />
+        {/* Vignette + bottom fade for text readability */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#040914] via-transparent to-transparent" />
+        <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: "inset 0 0 220px rgba(20,10,0,0.65)" }} />
 
-        {/* Vignette */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-[#040914]/60" />
+        {/* Drifting birds */}
+        <div className="absolute inset-0 pointer-events-none">
+          <Bird style={{ position: "absolute", top: "22%", left: `${((progress * 220) % 120) - 10}%`, opacity: 0.75 }} />
+          <Bird style={{ position: "absolute", top: "34%", left: `${((progress * 320 + 40) % 120) - 10}%`, opacity: 0.6, transform: "scale(0.7)" }} />
+          <Bird style={{ position: "absolute", top: "18%", left: `${((progress * 180 + 80) % 120) - 10}%`, opacity: 0.85, transform: "scale(1.2)" }} />
+          <Bird style={{ position: "absolute", top: "42%", left: `${((progress * 260 + 20) % 120) - 10}%`, opacity: 0.5, transform: "scale(0.9)" }} />
+        </div>
 
-        {/* Intro overlay (hero header) */}
+        {/* Intro hero overlay */}
         <div
           className={`absolute inset-0 flex items-center transition-opacity duration-500 pointer-events-none ${
             introVisible ? "opacity-100" : "opacity-0"
@@ -158,12 +156,12 @@ export const GlobeJourney = ({ locations = [] }) => {
                 38+ Years of Education Through Travel
               </div>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light tracking-tighter leading-[1.02] mb-6">
-                Spin the world.<br />
-                <span className="text-gradient">Fly to the classroom.</span>
+                Take flight.<br />
+                <span className="text-gradient">Land in the classroom.</span>
               </h1>
-              <p className="text-lg text-[#A0B2C6] max-w-lg leading-relaxed mb-10">
-                Scroll to dive into {stops} landmarks — from Lady Liberty to the twin Petronas — where
-                6,000+ students have already been.
+              <p className="text-lg text-[#F5D9AA] max-w-lg leading-relaxed mb-10">
+                Scroll to glide through {stops} landmarks — one continuous aerial journey
+                at golden hour, from Lady Liberty to the twin Petronas.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a
@@ -176,7 +174,7 @@ export const GlobeJourney = ({ locations = [] }) => {
                 <Link
                   to="/packages"
                   data-testid="hero-packages-btn"
-                  className="inline-flex items-center gap-2 px-7 py-4 rounded-full border border-white/20 text-white hover:bg-white/10 transition-all"
+                  className="inline-flex items-center gap-2 px-7 py-4 rounded-full border border-white/30 text-white hover:bg-white/10 transition-all"
                 >
                   View packages <ArrowRight size={16} />
                 </Link>
@@ -185,53 +183,42 @@ export const GlobeJourney = ({ locations = [] }) => {
           </div>
         </div>
 
-        {/* Active landmark info panel */}
+        {/* Active landmark info panel — anchored bottom-left, content changes as camera flies */}
         {activeIdx >= 0 && (() => {
           const activeLoc = locations[activeIdx];
           const ActiveIcon = TIME_ICONS[activeLoc.time_of_day] || Sun;
+          // Card fades in near center of segment
+          const cardOpacity = Math.max(0, Math.min(1, 1.4 - Math.abs(localFrac - 0.5) * 3));
           return (
             <div
               key={activeLoc.id}
               data-testid={`journey-active-${activeLoc.id}`}
-              className="absolute inset-0 flex items-end lg:items-center pointer-events-none"
-              style={{
-                opacity: Math.max(0, Math.min(1, bell * 1.5)),
-                transform: `translateY(${(1 - bell) * 30}px)`,
-                transition: "opacity 300ms ease-out, transform 300ms ease-out",
-              }}
+              className="absolute inset-0 flex items-end pb-10 lg:pb-16 pointer-events-none"
+              style={{ opacity: cardOpacity, transition: "opacity 150ms linear" }}
             >
-              <div className="container-x pointer-events-auto grid lg:grid-cols-12 gap-8 items-end lg:items-center pb-16 lg:pb-0">
-                <div className="lg:col-start-7 lg:col-span-6">
-                  <div className="crystal-glass rounded-3xl p-7 md:p-10 max-w-xl ml-auto">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="w-8 h-8 rounded-full bg-[#E29578]/20 border border-[#E29578]/40 flex items-center justify-center text-[#E29578]">
-                        <ActiveIcon size={14} />
-                      </span>
-                      <span className="text-[10px] uppercase tracking-[0.28em] text-[#E29578]">
-                        Scene {String(activeIdx + 1).padStart(2, "0")} · {activeLoc.time_of_day}
-                      </span>
-                    </div>
-                    <div className="text-xs text-[#A0B2C6] mb-1">{activeLoc.country}</div>
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-tighter text-white">
-                      {activeLoc.name}
-                    </h2>
-                    <div className="text-[#E29578] font-['Outfit'] text-lg mt-3">{activeLoc.tagline}</div>
-                    <p className="text-sm text-[#A0B2C6] leading-relaxed mt-4">{activeLoc.description}</p>
-                    <ul className="grid grid-cols-2 gap-2 mt-5">
-                      {activeLoc.highlights?.slice(0, 4).map((h) => (
-                        <li key={h} className="flex items-center gap-2 text-xs text-white/90">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#E29578]" /> {h}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      to="/contact"
-                      data-testid={`journey-cta-${activeLoc.id}`}
-                      className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-[#E29578] hover:text-[#040914] hover:border-transparent transition-all text-xs font-semibold text-white uppercase tracking-[0.2em]"
-                    >
-                      Plan this journey <ArrowRight size={14} />
-                    </Link>
+              <div className="container-x pointer-events-auto">
+                <div className="crystal-glass rounded-3xl p-6 md:p-8 max-w-xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-8 h-8 rounded-full bg-[#E29578]/20 border border-[#E29578]/40 flex items-center justify-center text-[#E29578]">
+                      <ActiveIcon size={14} />
+                    </span>
+                    <span className="text-[10px] uppercase tracking-[0.28em] text-[#E29578]">
+                      Scene {String(activeIdx + 1).padStart(2, "0")} · {activeLoc.time_of_day}
+                    </span>
                   </div>
+                  <div className="text-xs text-[#F5D9AA] mb-1">{activeLoc.country}</div>
+                  <h2 className="text-3xl sm:text-4xl font-light tracking-tighter text-white">
+                    {activeLoc.name}
+                  </h2>
+                  <div className="text-[#E29578] font-['Outfit'] text-base mt-2">{activeLoc.tagline}</div>
+                  <p className="text-sm text-white/85 leading-relaxed mt-3">{activeLoc.description}</p>
+                  <Link
+                    to="/contact"
+                    data-testid={`journey-cta-${activeLoc.id}`}
+                    className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-full bg-[#E29578] text-[#040914] hover:brightness-110 transition-all text-xs font-semibold uppercase tracking-[0.2em]"
+                  >
+                    Plan this journey <ArrowRight size={14} />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -266,17 +253,16 @@ export const GlobeJourney = ({ locations = [] }) => {
               key={l.id}
               data-testid={`progress-dot-${l.id}`}
               className={`w-1.5 h-1.5 rounded-full transition-all ${
-                i === activeIdx ? "bg-[#E29578] scale-150 shadow-[0_0_10px_#E29578]" : "bg-white/30"
+                i === activeIdx ? "bg-[#E29578] scale-150 shadow-[0_0_10px_#E29578]" : "bg-white/40"
               }`}
             />
           ))}
         </div>
 
-        {/* Scroll cue */}
         {introVisible && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#A0B2C6] text-xs uppercase tracking-[0.3em] animate-bounce pointer-events-none">
-            <span>Scroll</span>
-            <div className="w-px h-8 bg-white/30" />
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/80 text-xs uppercase tracking-[0.3em] animate-bounce pointer-events-none">
+            <span>Scroll to fly</span>
+            <div className="w-px h-8 bg-white/40" />
           </div>
         )}
       </div>
