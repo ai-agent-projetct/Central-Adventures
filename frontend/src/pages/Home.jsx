@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, ArrowRight, Star, Users, Globe2, Award } from "lucide-react";
-import { HeroCanvas } from "../components/HeroCanvas";
-import { JourneyScroll } from "../components/JourneyScroll";
+import { ArrowRight, Star, Users, Globe2, Award } from "lucide-react";
+import { GlobeJourney } from "../components/GlobeJourney";
 import { GalleryPreview } from "../components/GalleryPreview";
 import { BrochuresSection } from "../components/BrochuresSection";
 import { getGlobal, getDomestic, getPrograms } from "../lib/api";
@@ -18,7 +17,6 @@ export default function Home() {
   const [global, setGlobal] = useState([]);
   const [domestic, setDomestic] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const heroContentRef = useRef(null);
 
   useEffect(() => {
     getGlobal().then(setGlobal).catch(() => {});
@@ -26,78 +24,35 @@ export default function Home() {
     getPrograms().then(setPrograms).catch(() => {});
   }, []);
 
-  // Scroll-driven pin: fade + scale hero content as user scrolls past.
-  useEffect(() => {
-    const onScroll = () => {
-      const el = heroContentRef.current;
-      if (!el) return;
-      const y = window.scrollY;
-      const vh = window.innerHeight;
-      const p = Math.min(1, Math.max(0, y / (vh * 0.9)));
-      el.style.opacity = String(1 - p);
-      el.style.transform = `translateY(${p * -40}px) scale(${1 - p * 0.06})`;
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
     <div data-testid="home-page">
-      {/* HERO */}
-      <section className="relative min-h-[100vh] flex items-center overflow-hidden" data-testid="hero-section">
-        <HeroCanvas />
-        <div ref={heroContentRef} className="container-x relative z-10 pt-32 pb-16 will-change-transform">
-          <div className="max-w-3xl">
-            <div className="eyebrow mb-6" data-testid="hero-eyebrow">
-              38+ Years of Education Through Travel
-            </div>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light tracking-tighter leading-[1.02] mb-6">
-              Where <em className="text-gradient not-italic font-normal">Education</em> meets<br />
-              Adventure &amp; <em className="text-gradient not-italic font-normal">Exploration</em>
-            </h1>
-            <p className="text-lg text-[#A0B2C6] max-w-xl leading-relaxed mb-10">
-              Central Group brings together world-class educational tours and hands-on aerospace training —
-              inspiring the next generation of scientists, engineers, and explorers.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <a
-                href="#journey"
-                data-testid="hero-explore-btn"
-                className="inline-flex items-center gap-2 px-7 py-4 rounded-full bg-[#E29578] text-[#040914] font-semibold hover:brightness-110 transition-all"
-              >
-                Explore the Journey <ArrowDown size={16} />
-              </a>
-              <Link
-                to="/packages"
-                data-testid="hero-packages-btn"
-                className="inline-flex items-center gap-2 px-7 py-4 rounded-full border border-white/20 text-white hover:bg-white/10 transition-all"
-              >
-                View Packages <ArrowRight size={16} />
-              </Link>
-            </div>
+      {/* IMMERSIVE 3D GLOBE JOURNEY (hero + scroll fly-through) */}
+      {global.length > 0 && <GlobeJourney locations={global} />}
 
-            <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl">
-              {STATS.map(({ icon: Icon, num, label }) => (
-                <div key={label} className="crystal-glass rounded-2xl p-5" data-testid={`stat-${label.toLowerCase().replace(/\s/g, "-")}`}>
-                  <Icon size={18} className="text-[#E29578] mb-2" />
-                  <div className="font-['Outfit'] text-2xl text-white">{num}</div>
-                  <div className="text-xs text-[#A0B2C6] mt-1">{label}</div>
-                </div>
-              ))}
-            </div>
+      {/* STATS */}
+      <section className="section pt-24" data-testid="stats-section">
+        <div className="container-x">
+          <div className="mb-12 max-w-2xl">
+            <div className="eyebrow mb-4">By the numbers</div>
+            <h2 className="text-4xl sm:text-5xl font-light tracking-tighter">
+              Nearly four decades of <span className="text-gradient">education through travel</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {STATS.map(({ icon: Icon, num, label }) => (
+              <div
+                key={label}
+                data-testid={`stat-${label.toLowerCase().replace(/\s/g, "-")}`}
+                className="crystal-glass rounded-2xl p-6 card-hover"
+              >
+                <Icon size={20} className="text-[#E29578] mb-3" />
+                <div className="font-['Outfit'] text-3xl text-white">{num}</div>
+                <div className="text-xs text-[#A0B2C6] mt-1 tracking-wide">{label}</div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#A0B2C6] text-xs uppercase tracking-[0.3em] animate-bounce">
-          <span>Scroll</span>
-          <div className="w-px h-8 bg-white/30" />
-        </div>
       </section>
-
-      {/* SCROLL JOURNEY */}
-      <div id="journey">
-        <JourneyScroll destinations={global} />
-      </div>
 
       {/* DOMESTIC BENTO */}
       <section className="section" data-testid="domestic-section">

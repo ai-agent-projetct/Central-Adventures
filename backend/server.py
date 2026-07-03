@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form
+from fastapi.responses import StreamingResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 
 
 ROOT_DIR = Path(__file__).parent
+UPLOADS_DIR = ROOT_DIR / "uploads" / "brochures"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 load_dotenv(ROOT_DIR / '.env')
 
 mongo_url = os.environ['MONGO_URL']
@@ -254,17 +256,27 @@ async def get_brochures():
 
 @api_router.get("/brochures/{brochure_id}/download")
 async def download_brochure(brochure_id: str):
-    """Generate a PDF brochure on the fly using reportlab."""
+    """Serve uploaded PDF if present, else generate one on the fly via reportlab."""
+    brochure = next((b for b in BROCHURES if b["id"] == brochure_id), None)
+    if not brochure:
+        raise HTTPException(status_code=404, detail="Brochure not found")
+
+    # 1. Prefer user-uploaded PDF (if any)
+    uploaded = UPLOADS_DIR / f"{brochure_id}.pdf"
+    if uploaded.exists():
+        return FileResponse(
+            path=str(uploaded),
+            media_type="application/pdf",
+            filename=f"central-adventures-{brochure_id}.pdf",
+        )
+
+    # 2. Fallback: generate a branded PDF using reportlab
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.lib.colors import HexColor
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
     import io
-
-    brochure = next((b for b in BROCHURES if b["id"] == brochure_id), None)
-    if not brochure:
-        raise HTTPException(status_code=404, detail="Brochure not found")
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2 * cm, bottomMargin=2 * cm, leftMargin=2 * cm, rightMargin=2 * cm)
@@ -319,6 +331,32 @@ async def download_brochure(brochure_id: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
+
+
+# ============== BROCHURE UPLOAD (admin) ==============
+# Accept multipart PDF and save as {brochure_id}.pdf so /download endpoint
+# serves it going forward. Simple key-guarded endpoint — provide `admin_key`
+# via BROCHURE_UPLOAD_KEY env (defaults to "central-2026" for demo).
+
+@api_router.post("/brochures/{brochure_id}/upload")
+async def upload_brochure(
+    brochure_id: str,
+    file: UploadFile = File(...),
+    admin_key: str = Form(...),
+):
+    if admin_key != os.environ.get("BROCHURE_UPLOAD_KEY", "central-2026"):
+        raise HTTPException(status_code=401, detail="Invalid admin key")
+    if not any(b["id"] == brochure_id for b in BROCHURES):
+        raise HTTPException(status_code=404, detail="Brochure not found")
+    if not (file.content_type == "application/pdf" or (file.filename or "").lower().endswith(".pdf")):
+        raise HTTPException(status_code=400, detail="Only PDF files accepted")
+
+    target = UPLOADS_DIR / f"{brochure_id}.pdf"
+    data = await file.read()
+    if len(data) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large (max 20MB)")
+    target.write_bytes(data)
+    return {"ok": True, "brochure_id": brochure_id, "size": len(data)}
 
 
 app.include_router(api_router)

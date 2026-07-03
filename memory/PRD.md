@@ -35,3 +35,11 @@
 1. Wire email notifications when user provides Resend/SendGrid key.
 2. Build individual `/destinations/:id` and `/packages/:id` pages.
 3. Optional: swap Canvas2D globe for R3F on React 18 workspace or upgrade to `@react-three/fiber@9` + Node 22.
+
+## Update — 2026-07-03 (Immersive 3D globe)
+- Home hero replaced with real Three.js earth (day + normal + specular + clouds + atmosphere shader + starfield).
+- Scroll-driven camera fly-through: 800vh pinned container animates camera from wide orbit → into each landmark marker (NASA→Liberty→Pyramids→Burj Khalifa→Marina Bay→Petronas) → pull-back outro.
+- Landmark markers pulse; progress dots on right; overlay cards crossfade with active scene.
+- Fixed sticky positioning: replaced `overflow-x:hidden` with `overflow-x:clip` and removed Lenis to prevent sticky container from breaking.
+- New backend endpoint `POST /api/brochures/{id}/upload` (multipart PDF + admin_key) — uploaded PDFs are preferred by `/download`, falls back to reportlab-generated. Admin key defaults to `central-2026` (settable via `BROCHURE_UPLOAD_KEY` env).
+- Email notifications on contact form remain deferred — pending user's Resend/SendGrid API key.

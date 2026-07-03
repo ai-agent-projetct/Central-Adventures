@@ -27,23 +27,21 @@ function App() {
     <div className="App min-h-screen" data-testid="app-root">
       <SkyBackground />
       <BrowserRouter>
-        <SmoothScroll>
-          <Navbar />
-          <ScrollToTop />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/destinations" element={<Destinations />} />
-              <Route path="/packages" element={<Packages />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
-          </main>
-          <Footer />
-          <WhatsappFab />
-          <Toaster position="top-right" theme="dark" richColors closeButton />
-        </SmoothScroll>
+        <Navbar />
+        <ScrollToTop />
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/destinations" element={<Destinations />} />
+            <Route path="/packages" element={<Packages />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+        </main>
+        <Footer />
+        <WhatsappFab />
+        <Toaster position="top-right" theme="dark" richColors closeButton />
       </BrowserRouter>
     </div>
   );

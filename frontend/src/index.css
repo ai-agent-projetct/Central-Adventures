@@ -21,8 +21,10 @@ html, body {
   font-family: 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
+
+html { overflow-x: clip; }
+body { overflow-x: clip; }
 
 body {
   min-height: 100vh;
