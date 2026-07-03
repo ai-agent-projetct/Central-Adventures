@@ -6,12 +6,13 @@ import { Globe3DScene } from "./Globe3DScene";
 const TIME_ICONS = { sunrise: Sunrise, morning: Sunrise, day: Sun, sunset: Sunset, dusk: Sunset, night: Moon };
 
 /**
- * Immersive scroll journey.
- * Uses a sticky container. Inside:
- *   • Three.js earth stays visible as ambient background (dimmed at close-ups).
- *   • At each landmark segment, a real photograph of the location cross-fades
- *     to the foreground as a large "postcard" panel next to the info card.
- *   • Intro/outro overlays bookend the journey.
+ * Cinematic scroll journey with 3D depth-of-field.
+ * Each landmark photo:
+ *   • enters from below with rotateX + scale (like a card lifting off a table),
+ *   • Ken-Burns pans while active (subtle zoom + drift),
+ *   • exits by rotating away and receding into the distance.
+ * Combined with the sticky Three.js earth in the background, the effect reads
+ * as "diving into a 3D location" every ~viewport of scroll.
  */
 export const GlobeJourney = ({ locations = [] }) => {
   const containerRef = useRef(null);
@@ -45,8 +46,8 @@ export const GlobeJourney = ({ locations = [] }) => {
   const introVisible = progress < 0.1;
   const outroVisible = progress >= 0.85;
 
-  // Photo intensity fades in near the middle of each segment for a "postcard reveal" feel
-  const photoOpacity = activeIdx >= 0 ? Math.min(1, Math.sin(localFrac * Math.PI) * 1.4) : 0;
+  // Bell curve: image is transparent at edges of segment, full at middle
+  const bell = Math.max(0, Math.sin(localFrac * Math.PI));
 
   return (
     <div
@@ -57,39 +58,85 @@ export const GlobeJourney = ({ locations = [] }) => {
       style={{ height: `${100 + 100 * (stops + 1)}vh` }}
     >
       {/* Sticky pin */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* Globe layer (dims when landmark photo is prominent) */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden" style={{ perspective: "1400px" }}>
+        {/* Globe layer — dims when landmark photo is prominent */}
         <div
           className="absolute inset-0 transition-opacity duration-500"
-          style={{ opacity: activeIdx >= 0 ? 0.35 + (1 - photoOpacity) * 0.4 : 1 }}
+          style={{ opacity: activeIdx >= 0 ? 0.25 + (1 - bell) * 0.5 : 1 }}
         >
           <Globe3DScene locations={locations} />
         </div>
 
-        {/* Landmark photo layer — cross-fade per stop */}
-        {locations.map((loc, i) => (
-          <div
-            key={loc.id}
-            aria-hidden={i !== activeIdx}
-            className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-            style={{ opacity: i === activeIdx ? photoOpacity : 0 }}
-          >
-            <div className="absolute inset-0">
-              <img
-                src={loc.image}
-                alt={loc.name}
-                className="w-full h-full object-cover"
-                loading={i === activeIdx ? "eager" : "lazy"}
-                data-testid={`landmark-photo-${loc.id}`}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#040914]/95 via-[#040914]/40 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#040914] via-transparent to-[#040914]/60" />
-            </div>
-          </div>
-        ))}
+        {/* 3D Landmark scenes — each is a perspective card that lifts, floats & recedes */}
+        {locations.map((loc, i) => {
+          const isActive = i === activeIdx;
+          const relative = isActive ? localFrac : (i < activeIdx ? 1 : 0);
 
-        {/* Subtle vignette */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-[#040914]/70" />
+          // 3D transforms driven by localFrac (0→1 across the segment)
+          // Enter: rotateX 30 → 0, translateZ -600 → 0, scale 0.75 → 1
+          // Ken Burns while at center (0.35 - 0.65): scale 1.02 → 1.08, slight X drift
+          // Exit: rotateX 0 → -25, translateZ 0 → -400, scale 1 → 0.85
+          let rotX = 0, tz = 0, scale = 1, tx = 0;
+          if (isActive) {
+            if (localFrac < 0.35) {
+              const t = localFrac / 0.35;
+              rotX = 30 * (1 - t);
+              tz = -600 * (1 - t);
+              scale = 0.75 + 0.25 * t;
+            } else if (localFrac < 0.65) {
+              const t = (localFrac - 0.35) / 0.3;
+              rotX = 0;
+              tz = 0;
+              scale = 1.0 + t * 0.06;
+              tx = (t - 0.5) * 30; // subtle horizontal drift
+            } else {
+              const t = (localFrac - 0.65) / 0.35;
+              rotX = -25 * t;
+              tz = -400 * t;
+              scale = 1.06 - 0.21 * t;
+            }
+          } else if (i < activeIdx) {
+            rotX = -25; tz = -600; scale = 0.85;
+          } else {
+            rotX = 30; tz = -600; scale = 0.75;
+          }
+
+          const opacity = isActive ? bell : 0;
+
+          return (
+            <div
+              key={loc.id}
+              aria-hidden={!isActive}
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                opacity,
+                transform: `translate3d(${tx}px, 0, ${tz}px) rotateX(${rotX}deg) scale(${scale})`,
+                transformStyle: "preserve-3d",
+                transition: "opacity 400ms ease-out",
+                willChange: "transform, opacity",
+              }}
+            >
+              {/* Photo (full-bleed) */}
+              <div className="absolute inset-0">
+                <img
+                  src={loc.image}
+                  alt={loc.name}
+                  loading={isActive ? "eager" : "lazy"}
+                  data-testid={`landmark-photo-${loc.id}`}
+                  className="w-full h-full object-cover"
+                />
+                {/* Cinematic gradients: darker left for text, subtle bottom fade */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#040914]/95 via-[#040914]/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#040914] via-transparent to-[#040914]/50" />
+                {/* 3D "glass edge" glow around the frame */}
+                <div className="absolute inset-0 ring-1 ring-white/10 shadow-[inset_0_0_120px_rgba(0,0,0,0.6)] pointer-events-none" />
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Vignette */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-[#040914]/60" />
 
         {/* Intro overlay (hero header) */}
         <div
@@ -139,14 +186,15 @@ export const GlobeJourney = ({ locations = [] }) => {
               key={activeLoc.id}
               data-testid={`journey-active-${activeLoc.id}`}
               className="absolute inset-0 flex items-end lg:items-center pointer-events-none"
+              style={{
+                opacity: Math.max(0, Math.min(1, bell * 1.5)),
+                transform: `translateY(${(1 - bell) * 30}px)`,
+                transition: "opacity 300ms ease-out, transform 300ms ease-out",
+              }}
             >
               <div className="container-x pointer-events-auto grid lg:grid-cols-12 gap-8 items-end lg:items-center pb-16 lg:pb-0">
-                {/* Text card on right */}
                 <div className="lg:col-start-7 lg:col-span-6">
-                  <div
-                    className="crystal-glass rounded-3xl p-7 md:p-10 max-w-xl ml-auto"
-                    style={{ animation: "fadein 500ms ease-out" }}
-                  >
+                  <div className="crystal-glass rounded-3xl p-7 md:p-10 max-w-xl ml-auto">
                     <div className="flex items-center gap-2 mb-4">
                       <span className="w-8 h-8 rounded-full bg-[#E29578]/20 border border-[#E29578]/40 flex items-center justify-center text-[#E29578]">
                         <ActiveIcon size={14} />
@@ -182,7 +230,7 @@ export const GlobeJourney = ({ locations = [] }) => {
           );
         })()}
 
-        {/* Outro overlay */}
+        {/* Outro */}
         <div
           className={`absolute inset-0 flex items-center transition-opacity duration-500 pointer-events-none ${
             outroVisible ? "opacity-100" : "opacity-0"
