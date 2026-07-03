@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration_5 verification: user complaint 'still not working' is RESOLVED. Backend: all 19 pytest cases PASS (root, brochures list+3 PDF downloads+404, global destinations 7 items in exact order, journey-video meta+full-webm+range-start+range-middle+range-oob+mp4-full+mp4-range, domestic 8, packages 6, training 9, gallery 15, contact POST). Frontend scroll-scrub is fully functional in Playwright chromium: video readyState=4, duration=20.25, seekable end=20.25, currentSrc points at /api/journey-video/file.webm. Dense 34-point overlap scan (every 3% of doc scroll from 0-99%) shows ZERO frames where BOTH an active landmark card AND the outro CTA are simultaneously visible (previously this was the reported bug). Card sequence appears in correct order liberty(9-18%)→washington(21-24%)→egypt(27-36%)→nasa(42-45%)→singapore(48-57%)→malaysia(60-66%)→dubai(69-78%), then outro CTA fades in from 81% and holds at opacity 1.0 through 99%. Only 1 transient dead-zone frame at 39% (nasa at opacity 0.01 – just the fade transition between egypt and nasa, expected and acceptable per review request). All other routes (/destinations, /packages, /gallery, /about, /contact) load with 0 console errors and 0 page errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL / non-blocking: review request narrative mentions 'container height reduced from 2600vh to 1760vh (80vh per video-second)' but GlobeJourney.jsx line 130 still uses `Math.round(duration * 120) + 200` = 2600vh (120vh per video-second). The fix works correctly at 2600vh (no overlap, smooth scrub), so this is only a narrative/code discrepancy, not a user-visible bug. If tighter scroll feel is desired, change `* 120` to `* 80` on that line (containerVh would become 80 + 20*80 + 80 = 1760vh)."
+  ],
+  "critical_code_review_comments": [
+    "GlobeJourney.jsx: `progressRef` + rAF loop + video.readyState>=2 gate is a clean fix — no more stale-closure race, and the video catches up as soon as buffering completes. Good.",
+    "GlobeJourney.jsx: `!outroVisible` guard around activeLoc lookup successfully prevents outro/card double-render — verified across 34 scroll positions with 0 overlap.",
+    "GlobeJourney.jsx line 130: containerVh still uses 120vh per video-second (2600vh total), while the review request says it should be 80vh per video-second (1760vh). The feature works fine at 2600vh but the scroll feel is looser than the target. Non-blocking.",
+    "GlobeJourney.jsx: The line `const introVisible = progress < 0.06;` and `videoVisible = progress >= 0.04` overlap 2% (0.04-0.06). At those very low progress values the intro Earth is still up AND the video begins fading in — visually acceptable as a crossfade band. Not a bug.",
+    "GlobeJourney.jsx: `videoReady` is used both as the intro-fade gate (line 145: `introVisible || !videoReady ? 1 : 0`) and the video-visibility gate (line 156: `videoReady && videoVisible`). This means until video buffers, the Earth stays up — good defensive UX. Confirmed by observing 'Buffering flythrough…' spinner never appeared in test (video was ready in <12s).",
+    "server.py: unchanged since iteration_4, Range support still working (verified via 4 pytest cases: 206 for bytes=0-1023 → 1024 bytes, 206 for bytes=5000000-5001000 → 1001 bytes, 416 for bytes=99999999-99999999, 200 + Accept-Ranges: bytes for full GET). Same non-blocking notes from iteration_4 still apply (sync reportlab in async handler, logger declared after routes) — carry-over.",
+    "GlobeJourney.jsx: rAF loop reads `progressRef.current` on every frame regardless of `videoVisible`. Minor perf concern (constant `video.currentTime` writes even while intro is showing), but since the diff check `absDiff > 0.02` short-circuits when already-in-sync, actual seek pressure is bounded. Could gate on `videoVisible` for a small perf win."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (19/19 pytest cases pass)",
+    "frontend": "100% for the scroll-scrub feature — 0 overlap frames, full 20.24s video traversal, correct card sequence, clean outro handover, all other routes render without errors"
+  },
+  "test_credentials": "N/A (no auth in this app)",
+  "seed_data_creation": "One TEST_User inquiry created via POST /api/contact during pytest run",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The scroll-driven video journey is now stable end-to-end: (1) HTTP Range requests work on /api/journey-video/file.webm and file.mp4 (206 Partial Content + Content-Range + Accept-Ranges), verified by pytest and by video.seekable end=20.25 in browser. (2) `progressRef` in GlobeJourney.jsx makes the scroll → video.currentTime mapping race-free. (3) The `!outroVisible` guard around the active-landmark card prevents the previous overlap bug — verified across 34 dense scroll positions with 0 overlap. If the user reports the bug AGAIN, first re-run the overlap scan in this iteration's script — if it still shows 0 overlaps, the user may be describing a different perceived issue (e.g., the 2% intro/video crossfade band at progress ~0.04-0.06, or the fact that the scroll feel is loose because containerVh is still 2600 not 1760).",
+  "rca of the issue": "USER COMPLAINT (iteration_5): 'still not working check it' — despite the iteration_4 Range fix, the user was seeing black frames / overlap between the outro CTA and an active landmark card. RCA: in the previous build, `outroVisible` (progress >= 0.94) fired earlier than the last landmark's window ended, so the outro CTA appeared on top of the still-visible dubai card, and the widened window created a brief black band. FIX APPLIED (frontend-only): (a) `progressRef` shared between scroll handler and rAF loop eliminated a stale-closure race that could leave targetTime stuck at 0 if the video wasn't ready when the user scrolled, (b) video visibility widened from [0.06,0.96] to [0.04,0.99], (c) outro trigger raised from 0.94 to 0.98 — now sits AFTER the last landmark's opacity has faded to 0, (d) active card hidden when outroVisible=true. VERIFICATION (this iteration): 34-point overlap scan shows 0 overlap frames; card sequence progresses cleanly liberty→washington→egypt→nasa→singapore→malaysia→dubai; outro appears only after dubai ends. Bug is fixed. The container-height reduction from 2600vh → 1760vh listed in the review request narrative was NOT applied in the code (line 130 still says `* 120`) but is non-blocking because the feature works correctly at 2600vh."
+}

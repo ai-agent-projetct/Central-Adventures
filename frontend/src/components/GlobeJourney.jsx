@@ -39,7 +39,9 @@ export const GlobeJourney = ({ locations = [] }) => {
     try { v.load(); } catch (e) {}
   }, [videoInfo]);
 
-  // Track scroll & drive video currentTime
+  // Track scroll & drive video currentTime. Always compute target — no state gates —
+  // so the video catches up as soon as it becomes ready.
+  const progressRef = useRef(0);
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -49,40 +51,44 @@ export const GlobeJourney = ({ locations = [] }) => {
       const height = el.offsetHeight - window.innerHeight;
       const scrolled = Math.min(Math.max(-rect.top, 0), height);
       const p = height > 0 ? scrolled / height : 0;
+      progressRef.current = p;
       setProgress(p);
-
-      // Map scroll progress 0.10 → 0.94 to video time 0 → duration
-      const video = videoRef.current;
-      if (video && videoReady && videoInfo) {
-        const vp = Math.min(1, Math.max(0, (p - 0.10) / (0.94 - 0.10)));
-        targetTimeRef.current = vp * (video.duration || videoInfo.duration || 20);
-      }
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [videoReady, videoInfo]);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
-  // Smoothly move video.currentTime toward the target on rAF.
-  // Skip seek if already close (<0.02s) — avoids browser seek-storm which
-  // is the #1 cause of "choppy" scrubbing on H.264/VP9 streams.
+  // rAF loop — always running once video element exists. Reads progressRef,
+  // computes target, and moves video.currentTime toward it. Gates internally
+  // on videoReady so it's fully robust to load-order races.
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !videoReady) return;
+    if (!videoRef.current) return;
     let running = true;
     const step = () => {
       if (!running) return;
-      const target = targetTimeRef.current;
-      const cur = video.currentTime;
-      const diff = target - cur;
-      const absDiff = Math.abs(diff);
-      if (absDiff > 0.02) {
-        // Bigger jumps: seek less aggressively (browser seek is expensive).
-        // Small differences: nudge quickly for buttery scrubbing.
-        const factor = absDiff > 1.0 ? 0.35 : absDiff > 0.3 ? 0.28 : 0.5;
-        video.currentTime = cur + diff * factor;
+      const video = videoRef.current;
+      const dur = video && (video.duration || videoInfo?.duration || 20);
+      if (video && dur && !isNaN(dur)) {
+        const p = progressRef.current;
+        // Map scroll 0.04 → 0.98 to video 0 → duration
+        const vp = Math.min(1, Math.max(0, (p - 0.04) / (0.98 - 0.04)));
+        const target = vp * dur;
+        const cur = video.currentTime;
+        const diff = target - cur;
+        const absDiff = Math.abs(diff);
+        if (absDiff > 0.02 && video.readyState >= 2) {
+          const factor = absDiff > 1.5 ? 0.28 : absDiff > 0.4 ? 0.35 : 0.55;
+          try {
+            video.currentTime = cur + diff * factor;
+          } catch (e) {}
+        }
+        setCurrentTime(video.currentTime);
       }
-      setCurrentTime(video.currentTime);
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
@@ -90,22 +96,24 @@ export const GlobeJourney = ({ locations = [] }) => {
       running = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [videoReady]);
+  }, [videoInfo]);
 
   // ==== Derived UI state ====
-  const introVisible = progress < 0.08;
-  const videoVisible = progress >= 0.06 && progress < 0.96;
-  const outroVisible = progress >= 0.94;
+  const introVisible = progress < 0.06;
+  const videoVisible = progress >= 0.04 && progress < 0.99;
+  const outroVisible = progress >= 0.98;
 
   // Which landmark is the video currently at?
   let activeLoc = null;
   let activeIdx = -1;
-  for (let i = 0; i < locations.length; i++) {
-    const l = locations[i];
-    if (l.video_start != null && currentTime >= l.video_start && currentTime < l.video_end) {
-      activeLoc = l;
-      activeIdx = i;
-      break;
+  if (!outroVisible) {
+    for (let i = 0; i < locations.length; i++) {
+      const l = locations[i];
+      if (l.video_start != null && currentTime >= l.video_start && currentTime < l.video_end) {
+        activeLoc = l;
+        activeIdx = i;
+        break;
+      }
     }
   }
   // Fade card in/out at scene boundaries (last 0.6s of each 5s scene)
@@ -141,7 +149,7 @@ export const GlobeJourney = ({ locations = [] }) => {
           <Globe3DScene locations={locations} />
         </div>
 
-        {/* Phase 2 — Scroll-driven flythrough video */}
+        {/* Phase 2 — Scroll-driven flythrough video (always mounted so it can buffer even during intro) */}
         {videoInfo && (
           <div
             className="absolute inset-0 transition-opacity duration-500"
@@ -163,9 +171,15 @@ export const GlobeJourney = ({ locations = [] }) => {
                 <source key={s.src} src={s.src.startsWith("http") ? s.src : `${process.env.REACT_APP_BACKEND_URL}${s.src}`} type={s.type} />
               ))}
             </video>
-            {/* Cinematic gradients over video */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#040914]/70 via-transparent to-transparent" />
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#040914] via-transparent to-transparent" />
+          </div>
+        )}
+
+        {/* Loading indicator while video buffers (after intro, before ready) */}
+        {!videoReady && progress > 0.02 && (
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-3 rounded-full crystal-glass text-xs text-white/80 uppercase tracking-[0.25em] pointer-events-none">
+            <span className="w-2 h-2 rounded-full bg-[#E29578] animate-pulse" /> Buffering flythrough…
           </div>
         )}
 
