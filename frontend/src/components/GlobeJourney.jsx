@@ -67,56 +67,54 @@ export const GlobeJourney = ({ locations = [] }) => {
           <Globe3DScene locations={locations} />
         </div>
 
-        {/* 3D Landmark scenes — each is a perspective card that lifts, floats & recedes */}
+        {/* 3D Landmark scenes — dive-in effect: image starts far & tiny,
+            scales forward past the viewer, next scene rises from horizon.
+            Matches the Instagram-reel "fly through cities" cadence. */}
         {locations.map((loc, i) => {
           const isActive = i === activeIdx;
-          const relative = isActive ? localFrac : (i < activeIdx ? 1 : 0);
 
-          // 3D transforms driven by localFrac (0→1 across the segment)
-          // Enter: rotateX 30 → 0, translateZ -600 → 0, scale 0.75 → 1
-          // Ken Burns while at center (0.35 - 0.65): scale 1.02 → 1.08, slight X drift
-          // Exit: rotateX 0 → -25, translateZ 0 → -400, scale 1 → 0.85
-          let rotX = 0, tz = 0, scale = 1, tx = 0;
+          // Compute per-scene scale/opacity from localFrac (0 → 1)
+          // Enter (0-0.4): scale 0.15 → 1.0, opacity 0 → 1
+          // Peak  (0.4-0.6): full-bleed, subtle Ken Burns 1.0 → 1.12
+          // Exit (0.6-1.0): scale 1.12 → 3.5, opacity 1 → 0 (fly through)
+          let scale = 0.15, opacity = 0, tz = -800, blur = 0;
           if (isActive) {
-            if (localFrac < 0.35) {
-              const t = localFrac / 0.35;
-              rotX = 30 * (1 - t);
-              tz = -600 * (1 - t);
-              scale = 0.75 + 0.25 * t;
-            } else if (localFrac < 0.65) {
-              const t = (localFrac - 0.35) / 0.3;
-              rotX = 0;
+            if (localFrac < 0.4) {
+              const t = localFrac / 0.4;
+              const eased = t * t; // ease-in for acceleration
+              scale = 0.15 + 0.85 * eased;
+              tz = -800 + 800 * eased;
+              opacity = Math.min(1, t * 1.6);
+              blur = (1 - t) * 6;
+            } else if (localFrac < 0.6) {
+              const t = (localFrac - 0.4) / 0.2;
+              scale = 1.0 + 0.12 * t;
               tz = 0;
-              scale = 1.0 + t * 0.06;
-              tx = (t - 0.5) * 30; // subtle horizontal drift
+              opacity = 1;
+              blur = 0;
             } else {
-              const t = (localFrac - 0.65) / 0.35;
-              rotX = -25 * t;
-              tz = -400 * t;
-              scale = 1.06 - 0.21 * t;
+              const t = (localFrac - 0.6) / 0.4;
+              const eased = 1 - Math.pow(1 - t, 2); // ease-out
+              scale = 1.12 + 2.38 * eased;
+              tz = 0 + 200 * eased;
+              opacity = Math.max(0, 1 - eased * 1.6);
+              blur = eased * 10;
             }
-          } else if (i < activeIdx) {
-            rotX = -25; tz = -600; scale = 0.85;
-          } else {
-            rotX = 30; tz = -600; scale = 0.75;
           }
-
-          const opacity = isActive ? bell : 0;
 
           return (
             <div
               key={loc.id}
               aria-hidden={!isActive}
-              className="absolute inset-0 pointer-events-none"
+              className="absolute inset-0 pointer-events-none flex items-center justify-center"
               style={{
                 opacity,
-                transform: `translate3d(${tx}px, 0, ${tz}px) rotateX(${rotX}deg) scale(${scale})`,
+                transform: `translateZ(${tz}px) scale(${scale})`,
                 transformStyle: "preserve-3d",
-                transition: "opacity 400ms ease-out",
-                willChange: "transform, opacity",
+                filter: blur > 0.1 ? `blur(${blur.toFixed(2)}px)` : "none",
+                willChange: "transform, opacity, filter",
               }}
             >
-              {/* Photo (full-bleed) */}
               <div className="absolute inset-0">
                 <img
                   src={loc.image}
@@ -125,15 +123,25 @@ export const GlobeJourney = ({ locations = [] }) => {
                   data-testid={`landmark-photo-${loc.id}`}
                   className="w-full h-full object-cover"
                 />
-                {/* Cinematic gradients: darker left for text, subtle bottom fade */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#040914]/95 via-[#040914]/30 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#040914] via-transparent to-[#040914]/50" />
-                {/* 3D "glass edge" glow around the frame */}
-                <div className="absolute inset-0 ring-1 ring-white/10 shadow-[inset_0_0_120px_rgba(0,0,0,0.6)] pointer-events-none" />
+                {/* Text side gradient (darker at bottom for card readability) */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#040914]/95 via-[#040914]/25 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#040914] via-transparent to-[#040914]/40" />
               </div>
             </div>
           );
         })}
+
+        {/* Motion-streak overlay — kicks in during transition (localFrac near 0 or 1) */}
+        {activeIdx >= 0 && (
+          <div
+            className="absolute inset-0 pointer-events-none mix-blend-screen"
+            style={{
+              opacity: Math.max(0, 1 - Math.sin(localFrac * Math.PI) * 1.4),
+              background:
+                "radial-gradient(ellipse at center, rgba(226,149,120,0.25) 0%, transparent 45%), repeating-linear-gradient(90deg, transparent 0 6px, rgba(255,255,255,0.05) 6px 7px)",
+            }}
+          />
+        )}
 
         {/* Vignette */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-[#040914]/60" />

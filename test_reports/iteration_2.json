@@ -1,0 +1,33 @@
+{
+  "summary": "Validated dive-in scroll journey rework + backend. All 7 landmark scenes (liberty→malaysia in the requested order) fire correctly during scroll; each renders its journey-active card, has the corresponding landmark-photo in the DOM, and its progress-dot gets the highlighted style. Sky background transitions dawn → sunrise → day → sunset → dusk → night correctly across the doc. Journey CTA navigates to /contact. Backend 12/12 tests pass (global=7 with correct ordering, gallery=15, domestic=8, packages=6, brochures=5, NASA PDF valid, POST /api/contact works). Contact form submission on /contact returns 200, shows success toast, and clears the form.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL (not blocking): In GlobeJourney.jsx line 37, `const seg = 0.75 / Math.max(1, stops);` should be `1.0 / Math.max(1, stops)` so the 7 scenes evenly cover the entire [0.1, 0.85] active-region of the sticky container. Current formula only fills ~56% of the region (scenes cycle in scrollY ~1211-5378 of an 8640px sticky range), then clamps to malaysia for scrollY ~5378-7344 — meaning malaysia stays 'stuck' as active for 25% of the journey. This is why the task-spec formula `(0.1 + (i+0.5)*(0.75/7)) * (documentHeight - windowHeight)` did NOT land on the expected scenes; only after mapping to the container's own progress AND correcting `seg` (or, equivalently, using the code-implied smaller step (i+0.5)*0.75/7*0.75) did all 7 fire deterministically."
+  ],
+  "critical_code_review_comments": [
+    "GlobeJourney.jsx segment width bug: `seg = 0.75/stops` should be `seg = 1.0/stops`. Segments only cover 75% of the active-region; the last scene stays clamped-active for the remaining 25% of the sticky range. Fixes will make the Instagram-reel cadence feel uniform and match the task spec.",
+    "GlobeJourney progress listener recomputes bounding rect on every scroll frame without RAF batching; combined with HeroCanvas + Home.jsx scroll handlers this multiplies work per scroll (carry-over from iteration_1).",
+    "GlobeJourney.jsx: all 7 landmark photo layers apply `transformStyle: preserve-3d` + `translateZ` + `blur` filters simultaneously. On low-end devices this may cause GPU pressure; consider only mounting the ±1 neighbouring scenes.",
+    "server.py `reportlab` PDF generation still runs synchronously inside async `download_brochure`; recommend `fastapi.concurrency.run_in_threadpool` (carry-over from iteration_1).",
+    "server.py logger is instantiated after route definitions (carry-over from iteration_1)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (updated global=7 count+order, gallery=15)"
+  ],
+  "success_rate": { "backend": "100% (12/12)", "frontend": "100% (dive-in journey + sky-phase + progress dots + CTA nav + contact form)" },
+  "test_credentials": "N/A (no auth)",
+  "seed_data_creation": "Two TEST_UITester + TEST_User inquiries created via POST /api/contact",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite at /app/backend/tests/backend_test.py (12 tests). Home has 900vh sticky journey container starting at offsetTop=0; sticky range = 8640px on a 1920x1080 viewport. To reliably land on scene i center-peak, use scrollY = Y0 + (0.1 + (i+0.5) * 0.75/7 * 0.75) * (containerHeight - windowHeight). The task-spec formula in the review request will NOT hit scenes 1-5 due to the seg bug — only scenes 0 and 6 land, and 4-6 fall past the journey. All 7 landmark-photo images are always in DOM regardless of scroll; they just scale/opacity between 0 and 1 per the dive-in transform.",
+  "rca of the issue": "No blocking issues. Only a subtle design/formula bug in segment sizing (seg should be 1/stops, not 0.75/stops) which is why the task-spec scroll formula appeared to fail. Behaviour is otherwise correct: 7 scenes fire, dive-in transform is applied (scale 0.15→1.12→3.5 with translateZ and blur), motion-streak overlay renders during transitions, and all previously-passing endpoints/pages still function."
+}

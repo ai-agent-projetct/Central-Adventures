@@ -71,7 +71,9 @@ def test_global_destinations(client):
     r = client.get(f"{API}/destinations/global")
     assert r.status_code == 200
     d = r.json()
-    assert len(d) == 6
+    assert len(d) == 7
+    ids = [x["id"] for x in d]
+    assert ids == ["liberty", "washington", "nasa", "egypt", "dubai", "singapore", "malaysia"], f"order/ids mismatch: {ids}"
 
 
 def test_domestic_destinations(client):
@@ -99,7 +101,7 @@ def test_gallery(client):
     r = client.get(f"{API}/gallery")
     assert r.status_code == 200
     d = r.json()
-    assert len(d) == 12
+    assert len(d) == 15
 
 
 # ---- POST /api/contact ----
