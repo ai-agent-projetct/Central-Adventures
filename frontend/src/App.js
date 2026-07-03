@@ -1,53 +1,49 @@
-import { useEffect } from "react";
-import "@/App.css";
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import { Toaster } from "sonner";
+import "@/App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { SmoothScroll } from "@/components/SmoothScroll";
+import { SkyBackground } from "@/components/SkyBackground";
+import { WhatsappFab } from "@/components/WhatsappFab";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+import Home from "@/pages/Home";
+import Destinations from "@/pages/Destinations";
+import Packages from "@/pages/Packages";
+import Gallery from "@/pages/Gallery";
+import About from "@/pages/About";
+import Contact from "@/pages/Contact";
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+function ScrollToTop() {
+  const { pathname } = window.location;
+  React.useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 function App() {
   return (
-    <div className="App">
+    <div className="App min-h-screen" data-testid="app-root">
+      <SkyBackground />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <SmoothScroll>
+          <Navbar />
+          <ScrollToTop />
+          <main>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/destinations" element={<Destinations />} />
+              <Route path="/packages" element={<Packages />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+            </Routes>
+          </main>
+          <Footer />
+          <WhatsappFab />
+          <Toaster position="top-right" theme="dark" richColors closeButton />
+        </SmoothScroll>
       </BrowserRouter>
     </div>
   );
