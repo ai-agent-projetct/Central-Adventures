@@ -108,7 +108,7 @@ GLOBAL_DESTINATIONS = [
         "sky": {"from": "#FF7A00", "to": "#F5D9AA"},
         "tagline": "A monument, a message, a memory",
         "description": "Where every immigrant's dream first touched shore. Sail past Lady Liberty at sunrise, then explore Ellis Island's living archives — stories that built modern America.",
-        "image": "https://images.unsplash.com/photo-1583842761829-2b46658d95cb?w=1600&q=80",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/486atatb_Statue-of-Liberty-Island-New-York.webp",
         "highlights": ["Liberty Island ferry", "Ellis Island Museum", "Battery Park", "One World Observatory"]
     },
     {
@@ -119,7 +119,8 @@ GLOBAL_DESTINATIONS = [
         "sky": {"from": "#FFB27A", "to": "#7EC8E3"},
         "tagline": "Where a nation writes its history",
         "description": "The White House, Capitol Hill, Lincoln Memorial and the Smithsonian's 19 free museums. Government meets genius on the National Mall.",
-        "image": "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?w=1600&q=80",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/hkye61nj_washington-dc-1.jpg",
+        "image_night": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/h9qqkagj_National_Mall%2C_Lincoln_Memorial_04448v.jpg",
         "highlights": ["White House", "Capitol Hill", "Lincoln Memorial", "Smithsonian Museums"]
     },
     {
@@ -130,7 +131,7 @@ GLOBAL_DESTINATIONS = [
         "sky": {"from": "#4CA1AF", "to": "#F5D9AA"},
         "tagline": "Where dreams ignite at dawn",
         "description": "Witness Atlantis, walk the Rocket Garden, meet real astronauts. 6,000+ students have made this journey with us since 1987.",
-        "image": "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1600&q=80",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/55ko47zb_images%20%281%29.jpeg",
         "highlights": ["Atlantis Exhibit", "Rocket Garden", "Astronaut Encounter", "ATX Program"]
     },
     {
@@ -141,8 +142,8 @@ GLOBAL_DESTINATIONS = [
         "sky": {"from": "#F5B461", "to": "#E29578"},
         "tagline": "Standing at the edge of 4,500 years",
         "description": "Valley of Kings, Philae Temple, snorkelling in Hurghada and dinner cruises on the eternal Nile.",
-        "image": "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=1600&q=80",
-        "highlights": ["Great Pyramid", "Valley of Kings", "Philae Temple", "Nile Cruise"]
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/sr67bsij_images%20%282%29.jpeg",
+        "highlights": ["Great Pyramid", "Sphinx", "Valley of Kings", "Nile Cruise"]
     },
     {
         "id": "dubai",
@@ -214,8 +215,8 @@ TRAINING_PROGRAMS = [
 ]
 
 GALLERY_IMAGES = [
-    {"id": 1, "url": "https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?w=1000&q=80", "category": "NASA Tour", "caption": "Kennedy Space Center"},
-    {"id": 2, "url": "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=1000&q=80", "category": "Egypt Tour", "caption": "Pyramids of Giza"},
+    {"id": 1, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/sr67bsij_images%20%282%29.jpeg", "category": "NASA Tour", "caption": "Kennedy Space Center visitor complex"},
+    {"id": 2, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/55ko47zb_images%20%281%29.jpeg", "category": "Egypt Tour", "caption": "The Sphinx and Pyramids of Giza"},
     {"id": 3, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/kvs1gjwn_images%20%283%29.jpeg", "category": "General Tour", "caption": "Dubai skyline at sunset"},
     {"id": 4, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/yd413cei_images%20%287%29.jpeg", "category": "General Tour", "caption": "Marina Bay Sands, Singapore"},
     {"id": 5, "url": "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=1000&q=80", "category": "General Tour", "caption": "Kashmir Dal Lake"},
@@ -224,10 +225,11 @@ GALLERY_IMAGES = [
     {"id": 8, "url": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1000&q=80", "category": "DUDHWA NATIONAL PARK", "caption": "Wildlife safari"},
     {"id": 9, "url": "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1000&q=80", "category": "General Tour", "caption": "Himalayan trails"},
     {"id": 10, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/el1royqi_images%20%285%29.jpeg", "category": "General Tour", "caption": "Petronas Towers, Kuala Lumpur"},
-    {"id": 11, "url": "https://images.unsplash.com/photo-1583842761829-2b46658d95cb?w=1000&q=80", "category": "General Tour", "caption": "Statue of Liberty"},
-    {"id": 12, "url": "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?w=1000&q=80", "category": "General Tour", "caption": "Washington D.C."},
-    {"id": 13, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/au4b9cju_images%20%284%29.jpeg", "category": "General Tour", "caption": "Dubai at night"},
-    {"id": 14, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/zkqto252_images%20%286%29.jpeg", "category": "General Tour", "caption": "Singapore skyline"},
+    {"id": 11, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/486atatb_Statue-of-Liberty-Island-New-York.webp", "category": "General Tour", "caption": "Statue of Liberty"},
+    {"id": 12, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/hkye61nj_washington-dc-1.jpg", "category": "General Tour", "caption": "U.S. Capitol · Washington D.C."},
+    {"id": 13, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/h9qqkagj_National_Mall%2C_Lincoln_Memorial_04448v.jpg", "category": "General Tour", "caption": "National Mall & Lincoln Memorial"},
+    {"id": 14, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/au4b9cju_images%20%284%29.jpeg", "category": "General Tour", "caption": "Dubai at night"},
+    {"id": 15, "url": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/zkqto252_images%20%286%29.jpeg", "category": "General Tour", "caption": "Singapore skyline"},
 ]
 
 BROCHURES = [
