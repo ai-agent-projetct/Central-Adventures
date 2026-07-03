@@ -51,11 +51,11 @@ export const GlobeJourney = ({ locations = [] }) => {
       const p = height > 0 ? scrolled / height : 0;
       setProgress(p);
 
-      // Map scroll progress 0.15 → 0.92 to video time 0 → duration
+      // Map scroll progress 0.10 → 0.94 to video time 0 → duration
       const video = videoRef.current;
       if (video && videoReady && videoInfo) {
-        const vp = Math.min(1, Math.max(0, (p - 0.15) / (0.92 - 0.15)));
-        targetTimeRef.current = vp * (video.duration || videoInfo.duration || 35);
+        const vp = Math.min(1, Math.max(0, (p - 0.10) / (0.94 - 0.10)));
+        targetTimeRef.current = vp * (video.duration || videoInfo.duration || 20);
       }
     };
     onScroll();
@@ -63,8 +63,9 @@ export const GlobeJourney = ({ locations = [] }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [videoReady, videoInfo]);
 
-  // Smoothly lerp video.currentTime toward target on every animation frame.
-  // Direct currentTime = X on every scroll pixel is choppy; a lerp gives butter.
+  // Smoothly move video.currentTime toward the target on rAF.
+  // Skip seek if already close (<0.02s) — avoids browser seek-storm which
+  // is the #1 cause of "choppy" scrubbing on H.264/VP9 streams.
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !videoReady) return;
@@ -74,8 +75,12 @@ export const GlobeJourney = ({ locations = [] }) => {
       const target = targetTimeRef.current;
       const cur = video.currentTime;
       const diff = target - cur;
-      if (Math.abs(diff) > 0.05) {
-        video.currentTime = cur + diff * 0.18; // ease toward target
+      const absDiff = Math.abs(diff);
+      if (absDiff > 0.02) {
+        // Bigger jumps: seek less aggressively (browser seek is expensive).
+        // Small differences: nudge quickly for buttery scrubbing.
+        const factor = absDiff > 1.0 ? 0.35 : absDiff > 0.3 ? 0.28 : 0.5;
+        video.currentTime = cur + diff * factor;
       }
       setCurrentTime(video.currentTime);
       rafRef.current = requestAnimationFrame(step);
@@ -88,9 +93,9 @@ export const GlobeJourney = ({ locations = [] }) => {
   }, [videoReady]);
 
   // ==== Derived UI state ====
-  const introVisible = progress < 0.12;
-  const videoVisible = progress >= 0.10 && progress < 0.94;
-  const outroVisible = progress >= 0.92;
+  const introVisible = progress < 0.08;
+  const videoVisible = progress >= 0.06 && progress < 0.96;
+  const outroVisible = progress >= 0.94;
 
   // Which landmark is the video currently at?
   let activeLoc = null;
@@ -112,9 +117,9 @@ export const GlobeJourney = ({ locations = [] }) => {
 
   const ActiveIcon = activeLoc ? (TIME_ICONS[activeLoc.time_of_day] || Sun) : Sun;
 
-  // Container is tall enough that user scrolls to scrub the full ~35s video comfortably.
-  // Each video-second ≈ 100vh of scroll for a relaxed pace.
-  const containerVh = 100 /* intro */ + Math.round((videoInfo?.duration || 35) * 100) + 100 /* outro */;
+  // Container: slightly longer per video-second gives smoother scrubbing feel.
+  // 20s video × 120vh per second + intro/outro = 2600vh total.
+  const containerVh = 100 /* intro */ + Math.round((videoInfo?.duration || 20) * 120) + 100 /* outro */;
 
   return (
     <div

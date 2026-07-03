@@ -106,7 +106,7 @@ GLOBAL_DESTINATIONS = [
         "country": "New York, USA",
         "time_of_day": "sunrise",
         "video_start": 0,
-        "video_end": 5,
+        "video_end": 2.86,
         "sky": {"from": "#FF7A00", "to": "#F5D9AA"},
         "tagline": "A monument, a message, a memory",
         "description": "Where every immigrant's dream first touched shore. Sail past Lady Liberty at sunrise, then explore Ellis Island's living archives — stories that built modern America.",
@@ -118,8 +118,8 @@ GLOBAL_DESTINATIONS = [
         "name": "Washington D.C.",
         "country": "USA Capital",
         "time_of_day": "morning",
-        "video_start": 5,
-        "video_end": 10,
+        "video_start": 2.86,
+        "video_end": 5.71,
         "sky": {"from": "#FFB27A", "to": "#7EC8E3"},
         "tagline": "Where a nation writes its history",
         "description": "The White House, Capitol Hill, Lincoln Memorial and the Smithsonian's 19 free museums. Government meets genius on the National Mall.",
@@ -131,8 +131,8 @@ GLOBAL_DESTINATIONS = [
         "name": "Pyramids of Giza",
         "country": "Egypt",
         "time_of_day": "day",
-        "video_start": 10,
-        "video_end": 15,
+        "video_start": 5.71,
+        "video_end": 8.57,
         "sky": {"from": "#F5B461", "to": "#E29578"},
         "tagline": "Standing at the edge of 4,500 years",
         "description": "Valley of Kings, Philae Temple, snorkelling in Hurghada and dinner cruises on the eternal Nile.",
@@ -144,8 +144,8 @@ GLOBAL_DESTINATIONS = [
         "name": "NASA Kennedy Space Center",
         "country": "Florida, USA",
         "time_of_day": "day",
-        "video_start": 15,
-        "video_end": 20,
+        "video_start": 8.57,
+        "video_end": 11.43,
         "sky": {"from": "#4CA1AF", "to": "#F5D9AA"},
         "tagline": "Where dreams ignite at dawn",
         "description": "Witness Atlantis, walk the Rocket Garden, meet real astronauts. 6,000+ students have made this journey with us since 1987.",
@@ -157,8 +157,8 @@ GLOBAL_DESTINATIONS = [
         "name": "Marina Bay · Singapore",
         "country": "Singapore",
         "time_of_day": "dusk",
-        "video_start": 20,
-        "video_end": 25,
+        "video_start": 11.43,
+        "video_end": 14.29,
         "sky": {"from": "#1B2951", "to": "#7A3B69"},
         "tagline": "A city that glows at night",
         "description": "Gardens by the Bay, Universal Studios and the Science Centre — where technology meets tropical nature.",
@@ -171,8 +171,8 @@ GLOBAL_DESTINATIONS = [
         "name": "Petronas Towers · Kuala Lumpur",
         "country": "Malaysia",
         "time_of_day": "night",
-        "video_start": 25,
-        "video_end": 30,
+        "video_start": 14.29,
+        "video_end": 17.14,
         "sky": {"from": "#040914", "to": "#1B2951"},
         "tagline": "Twin lights against the tropical sky",
         "description": "Kuala Lumpur, Genting Highlands and Langkawi — Southeast Asia at its finest, from soaring towers to island paradises.",
@@ -184,8 +184,8 @@ GLOBAL_DESTINATIONS = [
         "name": "Burj Khalifa · Dubai",
         "country": "UAE",
         "time_of_day": "sunset",
-        "video_start": 30,
-        "video_end": 35,
+        "video_start": 17.14,
+        "video_end": 20,
         "sky": {"from": "#7A3B69", "to": "#E29578"},
         "tagline": "Golden hour above the desert",
         "description": "From the world's tallest tower to Desert Safaris and the Miracle Garden — where luxury meets learning.",
@@ -196,7 +196,7 @@ GLOBAL_DESTINATIONS = [
 ]
 
 JOURNEY_VIDEO_URL = "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/3izhpors_hf_20260703_165724_86ffaa2f-cc80-4a9a-9b1d-caa765afa0d0.mp4"
-JOURNEY_VIDEO_DURATION = 35.0
+JOURNEY_VIDEO_DURATION = 20.0
 JOURNEY_VIDEO_LOCAL_WEBM = ROOT_DIR / "uploads" / "videos" / "journey.webm"
 JOURNEY_VIDEO_LOCAL_MP4 = ROOT_DIR / "uploads" / "videos" / "journey.mp4"
 
