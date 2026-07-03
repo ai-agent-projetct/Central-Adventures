@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -277,18 +277,75 @@ async def get_journey_video():
     }
 
 
+def _range_response(request: Request, path: Path, media_type: str):
+    """Serve a file with HTTP Range support (206 Partial Content) so <video>
+    can seek to arbitrary timestamps without re-downloading the whole file."""
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_size = path.stat().st_size
+    range_header = request.headers.get("range") or request.headers.get("Range")
+
+    if not range_header:
+        # No range → full file (still expose Accept-Ranges so client learns it CAN seek)
+        return FileResponse(
+            str(path),
+            media_type=media_type,
+            headers={"Accept-Ranges": "bytes", "Cache-Control": "public, max-age=86400"},
+        )
+
+    # Parse "bytes=start-end"
+    try:
+        units, rng = range_header.split("=", 1)
+        assert units.strip().lower() == "bytes"
+        start_str, end_str = rng.split("-", 1)
+        start = int(start_str) if start_str else 0
+        end = int(end_str) if end_str else file_size - 1
+    except Exception:
+        raise HTTPException(status_code=416, detail="Invalid Range header")
+
+    if start >= file_size or end >= file_size or start > end:
+        raise HTTPException(
+            status_code=416,
+            detail="Range Not Satisfiable",
+            headers={"Content-Range": f"bytes */{file_size}"},
+        )
+
+    chunk_size = end - start + 1
+
+    def iter_chunk():
+        with open(path, "rb") as f:
+            f.seek(start)
+            remaining = chunk_size
+            block = 1024 * 64
+            while remaining > 0:
+                data = f.read(min(block, remaining))
+                if not data:
+                    break
+                remaining -= len(data)
+                yield data
+
+    return StreamingResponse(
+        iter_chunk(),
+        status_code=206,
+        media_type=media_type,
+        headers={
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(chunk_size),
+            "Cache-Control": "public, max-age=86400",
+        },
+    )
+
+
 @api_router.get("/journey-video/file.webm")
-async def journey_video_webm():
-    if not JOURNEY_VIDEO_LOCAL_WEBM.exists():
-        raise HTTPException(status_code=404, detail="Video not available")
-    return FileResponse(str(JOURNEY_VIDEO_LOCAL_WEBM), media_type="video/webm")
+async def journey_video_webm(request: Request):
+    return _range_response(request, JOURNEY_VIDEO_LOCAL_WEBM, "video/webm")
 
 
 @api_router.get("/journey-video/file.mp4")
-async def journey_video_mp4():
-    if not JOURNEY_VIDEO_LOCAL_MP4.exists():
-        raise HTTPException(status_code=404, detail="Video not available")
-    return FileResponse(str(JOURNEY_VIDEO_LOCAL_MP4), media_type="video/mp4")
+async def journey_video_mp4(request: Request):
+    return _range_response(request, JOURNEY_VIDEO_LOCAL_MP4, "video/mp4")
 
 
 @api_router.get("/destinations/domestic")
