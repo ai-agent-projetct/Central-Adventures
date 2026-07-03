@@ -17,3 +17,4 @@ export const getPrograms = () => api.get("/training-programs").then((r) => r.dat
 export const getGallery = () => api.get("/gallery").then((r) => r.data);
 export const getBrochures = () => api.get("/brochures").then((r) => r.data);
 export const brochureDownloadUrl = (id) => `${API}/brochures/${id}/download`;
+export const getJourneyVideo = () => api.get("/journey-video").then((r) => r.data);

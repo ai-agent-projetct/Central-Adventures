@@ -105,6 +105,8 @@ GLOBAL_DESTINATIONS = [
         "name": "Statue of Liberty",
         "country": "New York, USA",
         "time_of_day": "sunrise",
+        "video_start": 0,
+        "video_end": 5,
         "sky": {"from": "#FF7A00", "to": "#F5D9AA"},
         "tagline": "A monument, a message, a memory",
         "description": "Where every immigrant's dream first touched shore. Sail past Lady Liberty at sunrise, then explore Ellis Island's living archives — stories that built modern America.",
@@ -116,29 +118,21 @@ GLOBAL_DESTINATIONS = [
         "name": "Washington D.C.",
         "country": "USA Capital",
         "time_of_day": "morning",
+        "video_start": 5,
+        "video_end": 10,
         "sky": {"from": "#FFB27A", "to": "#7EC8E3"},
         "tagline": "Where a nation writes its history",
         "description": "The White House, Capitol Hill, Lincoln Memorial and the Smithsonian's 19 free museums. Government meets genius on the National Mall.",
         "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/hkye61nj_washington-dc-1.jpg",
-        "image_night": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/h9qqkagj_National_Mall%2C_Lincoln_Memorial_04448v.jpg",
         "highlights": ["White House", "Capitol Hill", "Lincoln Memorial", "Smithsonian Museums"]
-    },
-    {
-        "id": "nasa",
-        "name": "NASA Kennedy Space Center",
-        "country": "Florida, USA",
-        "time_of_day": "day",
-        "sky": {"from": "#4CA1AF", "to": "#F5D9AA"},
-        "tagline": "Where dreams ignite at dawn",
-        "description": "Witness Atlantis, walk the Rocket Garden, meet real astronauts. 6,000+ students have made this journey with us since 1987.",
-        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/55ko47zb_images%20%281%29.jpeg",
-        "highlights": ["Atlantis Exhibit", "Rocket Garden", "Astronaut Encounter", "ATX Program"]
     },
     {
         "id": "egypt",
         "name": "Pyramids of Giza",
         "country": "Egypt",
         "time_of_day": "day",
+        "video_start": 10,
+        "video_end": 15,
         "sky": {"from": "#F5B461", "to": "#E29578"},
         "tagline": "Standing at the edge of 4,500 years",
         "description": "Valley of Kings, Philae Temple, snorkelling in Hurghada and dinner cruises on the eternal Nile.",
@@ -146,22 +140,25 @@ GLOBAL_DESTINATIONS = [
         "highlights": ["Great Pyramid", "Sphinx", "Valley of Kings", "Nile Cruise"]
     },
     {
-        "id": "dubai",
-        "name": "Burj Khalifa · Dubai",
-        "country": "UAE",
-        "time_of_day": "sunset",
-        "sky": {"from": "#7A3B69", "to": "#E29578"},
-        "tagline": "Golden hour above the desert",
-        "description": "From the world's tallest tower to Desert Safaris and the Miracle Garden — where luxury meets learning.",
-        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/kvs1gjwn_images%20%283%29.jpeg",
-        "image_night": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/au4b9cju_images%20%284%29.jpeg",
-        "highlights": ["Burj Khalifa Deck", "Desert Safari", "Dubai Frame", "Global Village"]
+        "id": "nasa",
+        "name": "NASA Kennedy Space Center",
+        "country": "Florida, USA",
+        "time_of_day": "day",
+        "video_start": 15,
+        "video_end": 20,
+        "sky": {"from": "#4CA1AF", "to": "#F5D9AA"},
+        "tagline": "Where dreams ignite at dawn",
+        "description": "Witness Atlantis, walk the Rocket Garden, meet real astronauts. 6,000+ students have made this journey with us since 1987.",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/55ko47zb_images%20%281%29.jpeg",
+        "highlights": ["Atlantis Exhibit", "Rocket Garden", "Astronaut Encounter", "ATX Program"]
     },
     {
         "id": "singapore",
         "name": "Marina Bay · Singapore",
         "country": "Singapore",
         "time_of_day": "dusk",
+        "video_start": 20,
+        "video_end": 25,
         "sky": {"from": "#1B2951", "to": "#7A3B69"},
         "tagline": "A city that glows at night",
         "description": "Gardens by the Bay, Universal Studios and the Science Centre — where technology meets tropical nature.",
@@ -174,13 +171,34 @@ GLOBAL_DESTINATIONS = [
         "name": "Petronas Towers · Kuala Lumpur",
         "country": "Malaysia",
         "time_of_day": "night",
+        "video_start": 25,
+        "video_end": 30,
         "sky": {"from": "#040914", "to": "#1B2951"},
         "tagline": "Twin lights against the tropical sky",
         "description": "Kuala Lumpur, Genting Highlands and Langkawi — Southeast Asia at its finest, from soaring towers to island paradises.",
         "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/el1royqi_images%20%285%29.jpeg",
         "highlights": ["Petronas Towers", "Genting Highlands", "Batu Caves", "Langkawi"]
+    },
+    {
+        "id": "dubai",
+        "name": "Burj Khalifa · Dubai",
+        "country": "UAE",
+        "time_of_day": "sunset",
+        "video_start": 30,
+        "video_end": 35,
+        "sky": {"from": "#7A3B69", "to": "#E29578"},
+        "tagline": "Golden hour above the desert",
+        "description": "From the world's tallest tower to Desert Safaris and the Miracle Garden — where luxury meets learning.",
+        "image": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/kvs1gjwn_images%20%283%29.jpeg",
+        "image_night": "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/au4b9cju_images%20%284%29.jpeg",
+        "highlights": ["Burj Khalifa Deck", "Desert Safari", "Dubai Frame", "Global Village"]
     }
 ]
+
+JOURNEY_VIDEO_URL = "https://customer-assets.emergentagent.com/job_scroll-adventure-map/artifacts/3izhpors_hf_20260703_165724_86ffaa2f-cc80-4a9a-9b1d-caa765afa0d0.mp4"
+JOURNEY_VIDEO_DURATION = 35.0
+JOURNEY_VIDEO_LOCAL_WEBM = ROOT_DIR / "uploads" / "videos" / "journey.webm"
+JOURNEY_VIDEO_LOCAL_MP4 = ROOT_DIR / "uploads" / "videos" / "journey.mp4"
 
 DOMESTIC_DESTINATIONS = [
     {"id": "delhi-agra", "name": "Delhi – Agra", "desc": "Iconic monuments and Mughal heritage", "image": "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1200&q=80"},
@@ -244,6 +262,33 @@ BROCHURES = [
 @api_router.get("/destinations/global")
 async def get_global_destinations():
     return GLOBAL_DESTINATIONS
+
+
+@api_router.get("/journey-video")
+async def get_journey_video():
+    """Returns the scrollable flythrough video URLs (WebM + MP4) & duration."""
+    return {
+        "url": JOURNEY_VIDEO_URL,  # backwards-compat
+        "sources": [
+            {"type": "video/webm", "src": "/api/journey-video/file.webm"},
+            {"type": "video/mp4",  "src": "/api/journey-video/file.mp4"},
+        ],
+        "duration": JOURNEY_VIDEO_DURATION,
+    }
+
+
+@api_router.get("/journey-video/file.webm")
+async def journey_video_webm():
+    if not JOURNEY_VIDEO_LOCAL_WEBM.exists():
+        raise HTTPException(status_code=404, detail="Video not available")
+    return FileResponse(str(JOURNEY_VIDEO_LOCAL_WEBM), media_type="video/webm")
+
+
+@api_router.get("/journey-video/file.mp4")
+async def journey_video_mp4():
+    if not JOURNEY_VIDEO_LOCAL_MP4.exists():
+        raise HTTPException(status_code=404, detail="Video not available")
+    return FileResponse(str(JOURNEY_VIDEO_LOCAL_MP4), media_type="video/mp4")
 
 
 @api_router.get("/destinations/domestic")

@@ -1,0 +1,54 @@
+{
+  "summary": "Backend pytest 15/15 PASS including new /api/journey-video (duration=35, both webm+mp4 sources), /api/journey-video/file.webm (8.37 MB video/webm) and /api/journey-video/file.mp4 (13.24 MB video/mp4). Global destinations return 7 items in the exact task-spec order liberty→washington→egypt→nasa→singapore→malaysia→dubai with correct video_start/video_end (0,5)…(30,35). All previously working endpoints (root, brochures, gallery=15, packages=6, training=9, domestic=8, brochures PDF for nasa/egypt/day-camp, brochures 404, POST /api/contact) still 200. Frontend: 3D Earth intro visible at page top, video element mounts, WebM loads (readyState=4, duration=35.292s) and its first frame (Statue of Liberty) renders on screen when scroll enters the video phase — so the source URL + codec + preload path work in Playwright's Chromium. BUT the scroll-scrub itself is BROKEN: video.currentTime cannot be advanced from 0. Even a direct v.currentTime = 12.5 followed by 1.5 s wait leaves v.currentTime = 0 with seeking=false. As a result no landmark card (data-testid=journey-active-*) ever fades in beyond liberty (which is at currentTime=0), and the outro CTA (data-testid=journey-end-cta) never becomes visible because that gate is progress>=0.92 AND currentTime is stuck (also its parent wrapper opacity stays 0 because I could not actually reach scroll progress > 0.92 without lifting the video guard; the CTA parent computed opacity was 0). Other routes /destinations /packages /gallery /about /contact all render.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/journey-video/file.webm (and /file.mp4)",
+        "issue": "FastAPI FileResponse does NOT implement HTTP Range requests. curl -H 'Range: bytes=100-200' returns HTTP 200 with the full 8,366,875-byte body and NO Content-Range header (expected 206 Partial Content with Content-Range: bytes 100-200/8366875). HEAD returns 405. HTML5 <video> REQUIRES 206 responses to Range requests in order to seek — otherwise every currentTime=X assignment silently reverts to 0. This is the exact root cause the review request suspected but attributed to codec. The codec is fine (video plays, readyState=4, first frame renders); the seek path is what's broken.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Scroll-scrub of journey video",
+        "issue": "video.currentTime stays at 0 for the entire scroll (tested at 15/30/50/75/92% progress). RAF lerp fires (v.seeking flips true briefly) but the seek never actually completes because backend won't serve byte ranges. Consequently: (a) currentTime never advances past 0, (b) only liberty could ever be 'active' — even that card has opacity=0 in our probe because at currentTime=0 exactly, the fade formula min(inScene, sceneLen-inScene)/0.6 == min(0, 5)/0.6 == 0, so no card is EVER visible in the current build, (c) outro CTA remains at parent opacity 0 for the full scroll.",
+        "affected_selectors": ["[data-testid=\"journey-video\"]", "[data-testid^=\"journey-active-\"]", "[data-testid=\"journey-end-cta\"]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "PRIMARY FIX (backend): Replace the two `FileResponse` handlers for /api/journey-video/file.webm and /api/journey-video/file.mp4 with a Range-aware streaming endpoint (return 206 with Content-Range/Accept-Ranges when the Range header is present, otherwise 200 with Accept-Ranges: bytes). Simplest option: mount /app/backend/uploads/videos via `app.mount('/media/videos', StaticFiles(directory=...))` — Starlette's StaticFiles DOES honour Range requests — and change the /api/journey-video sources to point at that mount (still through /api ingress via a small proxy route, or expose as static under a non-/api path and update the frontend). Alternative: use starlette.responses.FileResponse via `starlette.staticfiles` internals, or implement a manual range handler (parse Range header, seek+iter_bytes with 206). Verify with `curl -H 'Range: bytes=0-1023'` returning HTTP 206 and Content-Range: bytes 0-1023/<total>.",
+    "SECONDARY (frontend): After the range fix, the fade-in formula `min(inScene, sceneLen-inScene)/0.6` yields 0 opacity when currentTime lands exactly on 0.0 or on a scene boundary (e.g., 5.000 / 10.000). Consider using `min(inScene+0.3, sceneLen-inScene+0.3)/0.6` so liberty is visible at t=0 and boundaries don't produce a hard black beat.",
+    "SECONDARY (frontend, minor): GlobeJourney.jsx `videoVisible = progress >= 0.10 && progress < 0.94` currently overlaps with `introVisible = progress < 0.12` between 0.10-0.12 — both Earth and Video render simultaneously in that band. Consider tightening one edge to avoid a 2% overlap flicker (once seeking works)."
+  ],
+  "critical_code_review_comments": [
+    "server.py: /api/journey-video/file.webm and /file.mp4 use FileResponse which does NOT implement HTTP Range. This blocks HTML5 video scrubbing — the whole feature depends on this. Use StaticFiles mount OR a manual Range implementation.",
+    "GlobeJourney.jsx: fade-in formula produces 0 at scene start (currentTime == video_start) so the first frame of every landmark shows NO overlay text — cards should be visible immediately when entering the scene, not 0.6 s in.",
+    "GlobeJourney.jsx: introVisible (<0.12) and videoVisible (>=0.10) overlap for 2% of scroll; results in dual render.",
+    "GlobeJourney.jsx: RAF lerp keeps seeking every frame even when videoVisible is false — could be gated on `videoVisible` to avoid needless seek pressure on the network.",
+    "server.py: `reportlab` PDF generation still runs synchronously inside async `download_brochure` — carry-over from prior iterations.",
+    "server.py: logger is still instantiated AFTER route definitions (carry-over)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (added journey-video meta/webm/mp4 tests + updated global destinations order to task-spec order with video_start/video_end assertions)"
+  ],
+  "success_rate": {
+    "backend": "100% pytest (15/15) — but the FileResponse endpoints fail the CRITICAL implicit contract of HTTP Range support, which is not asserted by the pytest suite (only status_code + size).",
+    "frontend": "60% — Earth intro OK, video loads OK, all other routes OK, BUT the scroll-scrub feature that this iteration is about is broken end-to-end because of the backend Range issue."
+  },
+  "test_credentials": "N/A",
+  "seed_data_creation": "One TEST_User inquiry created via POST /api/contact during pytest",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "The backend Range fix will manifest as: `curl -H 'Range: bytes=0-1023' ...file.webm` returns HTTP 206 with headers `Content-Range: bytes 0-1023/8366875` and `Accept-Ranges: bytes`. In the browser, after the fix, running `const v=document.querySelector('[data-testid=\"journey-video\"]'); v.currentTime=12.5; await new Promise(r=>setTimeout(r,1500));` should leave v.currentTime ≈ 12.5 (not 0). Then scroll to (containerHeight-windowHeight)*p for p in [0.15,0.30,0.50,0.75,0.92] and expect v.currentTime to be roughly p→((p-0.15)/0.77)*35 = [0, 6.8, 15.9, 27.3, 35] seconds respectively, and the corresponding journey-active-<id> card to have >0 opacity for each landmark window.",
+  "rca of the issue": "HTML5 <video> element seeks by issuing an HTTP GET with a Range header (e.g. `Range: bytes=524288-`). The server MUST respond with 206 Partial Content + Content-Range. FastAPI/Starlette's FileResponse ignores the incoming Range header and always sends the entire file with 200. Chromium therefore treats the resource as non-seekable, and any subsequent v.currentTime=X either silently reverts to 0 or (in some browsers) throws an unhandled IndexSize / QuotaExceeded. Confirmed empirically: (1) `curl -H 'Range: bytes=100-200' /api/journey-video/file.webm` → HTTP 200 with size=8,366,875 and no Content-Range header; (2) In Playwright chromium, `v.currentTime = 12.5; await 1.5s; v.currentTime === 0`. Fix: serve videos via Starlette StaticFiles mount OR write a Range-aware GET handler. Do NOT change frontend — GlobeJourney.jsx's scroll math and lerp are correct."
+}

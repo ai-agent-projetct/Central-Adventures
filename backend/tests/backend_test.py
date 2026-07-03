@@ -73,7 +73,43 @@ def test_global_destinations(client):
     d = r.json()
     assert len(d) == 7
     ids = [x["id"] for x in d]
-    assert ids == ["liberty", "washington", "nasa", "egypt", "dubai", "singapore", "malaysia"], f"order/ids mismatch: {ids}"
+    expected_order = ["liberty", "washington", "egypt", "nasa", "singapore", "malaysia", "dubai"]
+    assert ids == expected_order, f"order/ids mismatch: {ids}"
+    # video_start/video_end mapping check
+    expected_windows = [(0, 5), (5, 10), (10, 15), (15, 20), (20, 25), (25, 30), (30, 35)]
+    for item, (vs, ve) in zip(d, expected_windows):
+        assert item.get("video_start") == vs, f"{item['id']} video_start {item.get('video_start')} != {vs}"
+        assert item.get("video_end") == ve, f"{item['id']} video_end {item.get('video_end')} != {ve}"
+
+
+# ---- Journey video endpoints ----
+def test_journey_video_meta(client):
+    r = client.get(f"{API}/journey-video")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["duration"] == 35.0
+    assert isinstance(d.get("sources"), list) and len(d["sources"]) >= 2
+    types = {s["type"] for s in d["sources"]}
+    assert "video/webm" in types
+    assert "video/mp4" in types
+
+
+def test_journey_video_webm_file(client):
+    r = client.get(f"{API}/journey-video/file.webm", timeout=60)
+    assert r.status_code == 200
+    assert "video/webm" in r.headers.get("content-type", "")
+    size = len(r.content)
+    # expect ~8MB (between 4MB and 12MB tolerance)
+    assert 4 * 1024 * 1024 < size < 12 * 1024 * 1024, f"webm size out of range: {size}"
+
+
+def test_journey_video_mp4_file(client):
+    r = client.get(f"{API}/journey-video/file.mp4", timeout=60)
+    assert r.status_code == 200
+    assert "video/mp4" in r.headers.get("content-type", "")
+    size = len(r.content)
+    # expect ~13MB (between 8MB and 20MB tolerance)
+    assert 8 * 1024 * 1024 < size < 20 * 1024 * 1024, f"mp4 size out of range: {size}"
 
 
 def test_domestic_destinations(client):
