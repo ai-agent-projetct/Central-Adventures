@@ -1,0 +1,135 @@
+{
+  "theme_and_archetype": {
+    "theme": "dark",
+    "archetype": "Archetype 5 (Luxury - Cinematic)",
+    "description": "Cinematic, moody, and expensive feel. Focuses on an immersive day-to-night scroll journey. Backgrounds transition through twilight gradients and rely heavily on lighting, texture (noise/grain), and high-contrast typography.",
+    "color_palette": {
+      "background": {
+        "base": "#0A0F16",
+        "day": "#4CA1AF",
+        "sunset": "#FF7A00",
+        "night": "#040914"
+      },
+      "primary": "#E29578",
+      "secondary": "#00A8E8",
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "#A0B2C6",
+        "muted": "#6C7A89"
+      },
+      "surface": {
+        "glass": "bg-black/60 backdrop-blur-xl border border-white/10",
+        "solid": "bg-[#0A0F16]/90",
+        "card": "bg-[#121A26] border-[#1D283A]"
+      }
+    }
+  },
+  "typography": {
+    "primary_font": "Outfit",
+    "secondary_font": "Manrope",
+    "rules": {
+      "h1": "text-5xl sm:text-6xl lg:text-7xl font-light tracking-tighter text-white drop-shadow-md",
+      "h2": "text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white",
+      "h3": "text-xl sm:text-2xl font-normal text-white",
+      "body": "text-base leading-relaxed text-[#A0B2C6]",
+      "overline": "text-sm uppercase tracking-[0.2em] text-[#E29578] font-bold"
+    }
+  },
+  "layout_and_spacing": {
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "section_padding": "py-24 md:py-32",
+    "grid_modes": {
+      "marketing_bento": "grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-8 md:gap-12"
+    },
+    "surface_styles": {
+      "crystal_glass": "bg-black/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]",
+      "card_hover": "transition-all duration-300 hover:-translate-y-2 hover:border-white/30 hover:shadow-[0_8px_30px_rgba(226,149,120,0.15)]"
+    }
+  },
+  "animation_and_3d": {
+    "libraries": [
+      "@react-three/fiber",
+      "@react-three/drei",
+      "gsap",
+      "lenis",
+      "framer-motion"
+    ],
+    "scroll_strategy": "Lenis for smooth scrolling synced with GSAP ScrollTrigger to drive the R3F timeline and shaders.",
+    "scene_concept": "A fixed R3F canvas in the background. As the user scrolls, GSAP updates a uniform 'uTime' passed to a custom GLSL shader on a 3D Earth/Landmark mesh. The shader mixes day color map, specular clouds, and night lights map. HTML content (Shadcn/Tailwind) overlays the canvas and fades in/out via Framer Motion or GSAP based on scroll position.",
+    "day_night_cycle": {
+      "0%_scroll": "Sunrise (Warm lighting, NASA/Space Center intro)",
+      "33%_scroll": "Day (Harsh directional light, bright skies, Egypt Pyramids)",
+      "66%_scroll": "Sunset (Magenta/Orange ambient light, Dubai/Singapore)",
+      "100%_scroll": "Night (City lights glow, stars, dark UI, Space view)"
+    }
+  },
+  "content_strategy": {
+    "hero": "Immersive 3D globe with day/night shader. Overlaid with 'Where Education Meets Adventure & Exploration'. Call to action: Explore Tours.",
+    "destinations": "Scroll-driven morphing between global landmarks (NASA, Statue of Liberty, Egypt, Dubai, Singapore) reflecting the time of day.",
+    "domestic_tours": "Bento grid layout showcasing Indian destinations (Delhi, Kullu, Kashmir, Jaipur, etc.) with high-quality images and subtle zoom-on-hover.",
+    "training_programs": "Technical/Retro-Futurism style cards (Grid Borders, subtle glows) for Aeromodelling, Drone, Rocketry, Astronomy.",
+    "gallery": "Masonry layout with Crystal Glass UI filters.",
+    "about": "Rich typography storytelling section (38+ years, 6000+ students) with parallax image reveals.",
+    "contact": "Shadcn Form inside a Glassmorphism container. Includes destination select, WhatsApp sticky CTA."
+  },
+  "media_assets": {
+    "hero_and_global": [
+      {
+        "url": "https://images.unsplash.com/photo-1614728263952-84ea256f9679",
+        "description": "NASA Kennedy Space Center Rocket Launch",
+        "category": "hero_landmark"
+      },
+      {
+        "url": "https://images.pexels.com/photos/15127135/pexels-photo-15127135.jpeg",
+        "description": "Egypt Pyramids at Sunset",
+        "category": "landmark_day_sunset"
+      },
+      {
+        "url": "https://images.pexels.com/photos/5577693/pexels-photo-5577693.jpeg",
+        "description": "Dubai Burj Khalifa Night",
+        "category": "landmark_night"
+      },
+      {
+        "url": "https://images.pexels.com/photos/18787363/pexels-photo-18787363.jpeg",
+        "description": "Singapore Marina Bay Night",
+        "category": "landmark_night"
+      }
+    ],
+    "domestic_destinations": [
+      {
+        "url": "https://images.pexels.com/photos/32261804/pexels-photo-32261804.jpeg",
+        "description": "Jaipur City Palace",
+        "category": "domestic_tour"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1661924326425-c14a6426d989",
+        "description": "Jal Mahal Jaipur",
+        "category": "domestic_tour"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1595815771614-ade9d652a65d",
+        "description": "Kashmir Dal Lake",
+        "category": "domestic_tour"
+      }
+    ],
+    "training_programs": [
+      {
+        "url": "https://images.unsplash.com/photo-1506947411487-a56738267384",
+        "description": "Student Drone Training Quadcopter",
+        "category": "training"
+      }
+    ]
+  },
+  "testing_attributes": {
+    "rule": "All interactive and key informational elements MUST include a data-testid attribute in kebab-case, role-based format (e.g., data-testid='explore-tours-button')."
+  },
+  "instructions_to_main_agent": [
+    "1. Initialize the React app with Tailwind CSS, Shadcn UI, Framer Motion, GSAP, Lenis, and @react-three/fiber.",
+    "2. Implement the background 3D canvas (z-[-1]) using R3F. Set up the day-to-night shader logic synced to Lenis/GSAP ScrollTrigger.",
+    "3. Scaffold the frontend structure mapping to the routes: /, /destinations, /packages, /gallery, /about, /contact.",
+    "4. Use 'Outfit' for all Headings (font-family: 'Outfit', sans-serif) and 'Manrope' for Body (font-family: 'Manrope', sans-serif). Apply typography rules rigidly.",
+    "5. Follow the 'Crystal Glass' and 'Card' styles for surfaces over the 3D background to maintain legibility and aesthetic contrast.",
+    "6. Build the Contact Form utilizing Shadcn primitives, ensuring all components have testing attributes.",
+    "7. Rely entirely on the provided 'media_assets' for images. Do NOT use placeholders."
+  ]
+}
