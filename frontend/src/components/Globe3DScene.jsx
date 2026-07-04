@@ -105,7 +105,8 @@ export const Globe3DScene = ({ locations = [] }) => {
     const dayMap = loader.load("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg");
     const bumpMap = loader.load("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg");
     const specMap = loader.load("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg");
-    [dayMap, bumpMap, specMap].forEach((t) => { if (t) t.colorSpace = THREE.SRGBColorSpace; });
+    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+    [dayMap, bumpMap, specMap].forEach((t) => { if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; } });
 
     const earth = new THREE.Mesh(
       new THREE.SphereGeometry(2, 128, 128),
@@ -147,7 +148,7 @@ export const Globe3DScene = ({ locations = [] }) => {
     const clouds = new THREE.Mesh(
       new THREE.SphereGeometry(2.015, 96, 96),
       new THREE.MeshPhongMaterial({
-        map: loader.load("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png"),
+        map: (() => { const c = loader.load("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png"); c.anisotropy = maxAniso; return c; })(),
         transparent: true,
         opacity: 0.4,
         depthWrite: false,
