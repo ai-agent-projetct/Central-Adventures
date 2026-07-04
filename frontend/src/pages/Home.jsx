@@ -4,6 +4,8 @@ import { ArrowRight, Star, Users, Globe2, Award } from "lucide-react";
 import { GlobeJourney } from "../components/GlobeJourney";
 import { GalleryPreview } from "../components/GalleryPreview";
 import { BrochuresSection } from "../components/BrochuresSection";
+import { Competitions } from "../components/Competitions";
+import { WhyCentralGroup } from "../components/WhyCentralGroup";
 import { getGlobal, getDomestic, getPrograms } from "../lib/api";
 
 const STATS = [
@@ -114,6 +116,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* COMPETITIONS & EVENTS */}
+      <Competitions />
+
+      {/* WHY CENTRAL GROUP */}
+      <WhyCentralGroup />
 
       {/* GALLERY PREVIEW */}
       <GalleryPreview />

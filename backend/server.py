@@ -221,15 +221,15 @@ PACKAGES = [
 ]
 
 TRAINING_PROGRAMS = [
-    {"id": "aeromodelling", "icon": "Plane", "title": "Aeromodelling Workshop", "desc": "Students learn aerodynamics and build their own flying model aircraft."},
-    {"id": "drone", "icon": "Send", "title": "Drone Modelling", "desc": "Hands-on training in drone assembly, flight control and live quadcopter flying."},
-    {"id": "rocket", "icon": "Rocket", "title": "Rocket Modelling", "desc": "Design, construct and launch model rockets — water and solid-fuel."},
-    {"id": "astro", "icon": "Telescope", "title": "Astronomy & Stargazing", "desc": "Celestial navigation, telescope operation and night-sky observation."},
-    {"id": "planetarium", "icon": "Sparkles", "title": "Space Planetarium", "desc": "Immersive mobile dome bringing galaxies and nebulae to life."},
-    {"id": "telescope", "icon": "Search", "title": "Telescope Making", "desc": "Build a fully functional telescope from optical components."},
-    {"id": "comm", "icon": "Radio", "title": "Space Communications", "desc": "Satellite communications with ISRO scientists in Bangalore."},
-    {"id": "satellite", "icon": "Satellite", "title": "Satellite Making", "desc": "Design satellite models with high altitude balloon launches."},
-    {"id": "ham", "icon": "RadioTower", "title": "HAM Radio Workshop", "desc": "Master wireless communications and earn Amateur Station Operator Certificate."},
+    {"id": "aeromodelling", "icon": "Plane", "title": "Aeromodelling Workshop", "desc": "Students learn aerodynamics and build their own flying model aircraft from scratch — from balsa wood to final flight."},
+    {"id": "drone", "icon": "Send", "title": "Drone Modelling", "desc": "Hands-on training in drone assembly, flight control systems, calibrations, and live quadcopter flying."},
+    {"id": "rocket", "icon": "Rocket", "title": "Rocket Modelling", "desc": "Design, construct, and launch model rockets — water rockets and solid-fuel chemical rockets."},
+    {"id": "astro", "icon": "Telescope", "title": "Astronomy & Stargazing", "desc": "Celestial navigation, telescope operation, and night-sky observation of eclipses and planets."},
+    {"id": "planetarium", "icon": "Sparkles", "title": "Space Planetarium", "desc": "Immersive mobile dome — advanced projection brings galaxies, nebulae, and solar systems to life."},
+    {"id": "telescope", "icon": "Search", "title": "Telescope Making", "desc": "Build a fully functional telescope from optical components to final assembly."},
+    {"id": "comm", "icon": "Radio", "title": "Space Communications", "desc": "Discover satellite communications with ISRO scientists — includes ISRO Satellite Centre, Bangalore."},
+    {"id": "satellite", "icon": "Satellite", "title": "Satellite Making", "desc": "Design satellite models and experience high altitude balloon launches to the edge of space."},
+    {"id": "ham", "icon": "RadioTower", "title": "HAM Radio Workshop", "desc": "Master wireless communications and earn the government-issued Amateur Station Operator Certificate."},
 ]
 
 GALLERY_IMAGES = [
